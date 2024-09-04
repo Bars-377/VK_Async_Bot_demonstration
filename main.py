@@ -4,16 +4,15 @@ from vkbottle.bot import Bot, Message
 from vkbottle import CtxStorage
 
 import aiofiles
+import configparser
+import logging
 
 from keyboards import *
 from base import *
 
-import configparser
-
+# Чтение конфигурации
 config = configparser.ConfigParser()
 config.read("config.ini")
-
-import logging
 
 # Устанавливаем обработчик для игнорирования сообщений уровня ERROR
 class IgnoreErrors(logging.Filter):
@@ -30,6 +29,10 @@ logger.addFilter(IgnoreErrors())
 # Создаем логгер для модуля mysql.connector
 mysql_logger = logging.getLogger("mysql.connector")
 mysql_logger.setLevel(logging.INFO)
+
+# Создаем логгер для модуля urllib3
+urllib3_logger = logging.getLogger("urllib3")
+urllib3_logger.setLevel(logging.INFO)  # Игнорируем сообщения уровня DEBUG и INFO
 
 # Пример использования логгера
 logger.error("'message_read' is not a valid GroupEventType")  # Это сообщение будет игнорироваться
@@ -290,6 +293,7 @@ def process_1():
         EVENTS = 16
         ANNIVERSARY = 17
         GRADE = 18
+        AGREEMENT_INPUT = 19
 
     locations_1 = ('Томск', 'Северск')
 
@@ -343,8 +347,39 @@ def process_1():
 
             back_list = ('back_1', 'back_13', 'back_5', 'back_6', 'back_6')
 
+            async def number_review():
+                await message.answer("Спасибо за ваш отзыв и оценку")
+
+                number_statement = ctx.get(f'{user_id}: number_statement')
+                number_date = ctx.get(f'{user_id}: number_date')
+                number_department = ctx.get(f'{user_id}: number_department')
+                number_grade = ctx.get(f'{user_id}: number_grade')
+                number_waiting_time = ctx.get(f'{user_id}: number_waiting_time')
+                number_time = ctx.get(f'{user_id}: number_time')
+                number_employee = ctx.get(f'{user_id}: number_employee')
+                number_review = ctx.get(f'{user_id}: number_review')
+
+                questions = (number_statement, number_date, number_department, number_grade, number_waiting_time, number_time, number_employee, number_review)
+
+                await base().base_review(*questions)
+
+                await notification_delete_coupon(user_id, message)
+
+                for context in contexts:
+                    ctx.set(f"{user_id}: {context}", "None")
+
+                await bot.state_dispenser.set(message.peer_id, SuperStates.FILIALS)
+                await buttons.menu(user_id, config["VKONTAKTE"]["token"])
+                # Очистка всех переменных
+                await reset_ctx(user_id)
+                return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+
             try:
                 payload_data = eval(message.payload)['cmd']
+
+                if payload_data == '1' and ctx.get(f'{user_id}: number_employee') != 'None':
+                    ctx.set(f"{user_id}: number_review", '')
+                    return await number_review()
 
                 if payload_data == 'menu' or payload_data == 'back':
 
@@ -358,225 +393,6 @@ def process_1():
                     # Очистка всех переменных
                     await reset_ctx(user_id)
                     return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
-
-                # elif payload_data == 'tomsk':
-                #     keyboard = await buttons.tomsk()
-                #     return await message.answer("Выберите район для записи", keyboard=keyboard)
-
-                # elif payload_data == 'frunze':
-                #     ctx.set(f"{user_id}: number_department", 'Кировский')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'derb':
-                #     ctx.set(f"{user_id}: number_department", 'Ленинский')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'pushk':
-                #     ctx.set(f"{user_id}: number_department", 'Октябрьский')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'tvers':
-                #     ctx.set(f"{user_id}: number_department", 'Советский')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'razv':
-                #     ctx.set(f"{user_id}: number_department", 'Академгородок')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'mfc_business':
-                #     ctx.set(f"{user_id}: number_department", 'ЦОУ для бизнеса')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'tomsk_obl':
-                #     keyboard = await buttons.tomsk_obl()
-                #     return await message.answer("Выберите район для записи", keyboard=keyboard)
-
-                # elif payload_data == 'tomsk_obl_1':
-                #     keyboard = await buttons.tomsk_obl_1()
-                #     return await message.answer("Выберите район для записи", keyboard=keyboard)
-
-                # elif payload_data == 'tomsk_obl_2':
-                #     keyboard = await buttons.tomsk_obl_1()
-                #     return await message.answer("Выберите район для записи", keyboard=keyboard)
-
-                # elif payload_data == 'asino':
-                #     ctx.set(f"{user_id}: number_department", 'Асиновский')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'cedar':
-                #     ctx.set(f"{user_id}: number_department", 'Кедровый')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'zato':
-                #     ctx.set(f"{user_id}: number_department", 'ЗАТО Северск')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'ziryansk':
-                #     ctx.set(f"{user_id}: number_department", 'Зырянский')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'parabel':
-                #     ctx.set(f"{user_id}: number_department", 'Парабельский')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'balyar':
-                #     ctx.set(f"{user_id}: number_department", 'Верхнекетский')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'alex':
-                #     ctx.set(f"{user_id}: number_department", 'Александровский')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'teguld':
-                #     ctx.set(f"{user_id}: number_department", 'Тегульдетский')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'chain':
-                #     ctx.set(f"{user_id}: number_department", 'Чаинский')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'pervom_rayon':
-                #     ctx.set(f"{user_id}: number_department", 'Первомайский')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'kojev_rayon':
-                #     ctx.set(f"{user_id}: number_department", 'Кожевниковский')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'krivosh_rayon':
-                #     ctx.set(f"{user_id}: number_department", 'Кривошеинский')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'kolp_rayon':
-                #     ctx.set(f"{user_id}: number_department", 'Колпашевский')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'molch_rayon':
-                #     ctx.set(f"{user_id}: number_department", 'Молчановский')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'shegar_rayon':
-                #     ctx.set(f"{user_id}: number_department", 'Шегарский')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'tomsk_rayon':
-                #     keyboard = await buttons.tomsk_rayon()
-                #     return await message.answer("Выберите район для записи", keyboard=keyboard)
-
-                # elif payload_data == 'tomsk_rayon_1':
-                #     keyboard = await buttons.tomsk_rayon_1()
-                #     return await message.answer("Выберите район для записи", keyboard=keyboard)
-
-                # elif payload_data == 'voronino':
-                #     ctx.set(f"{user_id}: number_department", 'д. Воронино')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'kislovka':
-                #     ctx.set(f"{user_id}: number_department", 'д. Кисловска')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'zonaln':
-                #     ctx.set(f"{user_id}: number_department", 'пос. Зональная станция')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'peaceful':
-                #     ctx.set(f"{user_id}: number_department", 'пос. Мирный')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'dawn':
-                #     ctx.set(f"{user_id}: number_department", 'пос. Рассвет')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'bogashevo':
-                #     ctx.set(f"{user_id}: number_department", 'с. Богашево')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'vershinino':
-                #     ctx.set(f"{user_id}: number_department", 'с. Вершинино')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'zork':
-                #     ctx.set(f"{user_id}: number_department", 'с. Зоркальцево')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'itatka':
-                #     ctx.set(f"{user_id}: number_department", 'с. Итатка')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'kaltay':
-                #     ctx.set(f"{user_id}: number_department", 'с. Калтай')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'kornilovo':
-                #     ctx.set(f"{user_id}: number_department", 'с. Корнилово')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'robin':
-                #     ctx.set(f"{user_id}: number_department", 'с. Малиновка')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'mejen':
-                #     ctx.set(f"{user_id}: number_department", 'с. Межениновка')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'novoroj':
-                #     ctx.set(f"{user_id}: number_department", 'с. Новорождественское')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'rybalovo':
-                #     ctx.set(f"{user_id}: number_department", 'с. Рыболово')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'moryak_zaton':
-                #     ctx.set(f"{user_id}: number_department", 'с. Моряковский затон')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'turuntayevo_selo':
-                #     ctx.set(f"{user_id}: number_department", 'с. Турунтаево')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'october':
-                #     ctx.set(f"{user_id}: number_department", 'с. Октябрьское')
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
 
                 elif ctx.get(f'{user_id}: number_department') != 'None' and ctx.get(f'{user_id}: number_grade') == 'None':
                     ctx.set(f"{user_id}: number_grade", payload_data)
@@ -595,7 +411,7 @@ def process_1():
 
                 elif ctx.get(f'{user_id}: number_time') != 'None':
                     ctx.set(f"{user_id}: number_employee", payload_data)
-                    keyboard = await buttons.menu_menu()
+                    keyboard = await buttons.grade()
                     return await message.answer("Оставьте свой отзыв", keyboard=keyboard)
 
                 elif payload_data in back_list:
@@ -603,36 +419,6 @@ def process_1():
                     # return await message.answer("Выберите филиал", keyboard=keyboard)
                     keyboard = await buttons.reception()
                     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'back_1':
-                #     # keyboard = await buttons.filials()
-                #     # return await message.answer("Выберите филиал", keyboard=keyboard)
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'back_13':
-                #     # keyboard = await buttons.tomsk_rayon()
-                #     # return await message.answer("Выберите филиал", keyboard=keyboard)
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'back_5':
-                #     # keyboard = await buttons.tomsk_obl()
-                #     # return await message.answer("Выберите филиал", keyboard=keyboard)
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'back_6':
-                #     # keyboard = await buttons.tomsk_obl_1()
-                #     # return await message.answer("Выберите филиал", keyboard=keyboard)
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-
-                # elif payload_data == 'back_6':
-                #     # keyboard = await buttons.tomsk_obl_1()
-                #     # return await message.answer("Выберите филиал", keyboard=keyboard)
-                #     keyboard = await buttons.reception()
-                #     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
 
                 elif payload_data == 'button_review':
                     keyboard = await buttons.menu_menu()
@@ -642,31 +428,7 @@ def process_1():
 
                 if ctx.get(f'{user_id}: number_employee') != 'None':
                     ctx.set(f"{user_id}: number_review", message.text)
-                    await message.answer("Спасибо за ваш отызв и оценку")
-
-                    number_statement = ctx.get(f'{user_id}: number_statement')
-                    number_date = ctx.get(f'{user_id}: number_date')
-                    number_department = ctx.get(f'{user_id}: number_department')
-                    number_grade = ctx.get(f'{user_id}: number_grade')
-                    number_waiting_time = ctx.get(f'{user_id}: number_waiting_time')
-                    number_time = ctx.get(f'{user_id}: number_time')
-                    number_employee = ctx.get(f'{user_id}: number_employee')
-                    number_review = ctx.get(f'{user_id}: number_review')
-
-                    questions = (number_statement, number_date, number_department, number_grade, number_waiting_time, number_time, number_employee, number_review)
-
-                    await base().base_review(*questions)
-
-                    await notification_delete_coupon(user_id, message)
-
-                    for context in contexts:
-                        ctx.set(f"{user_id}: {context}", "None")
-
-                    await bot.state_dispenser.set(message.peer_id, SuperStates.FILIALS)
-                    await buttons.menu(user_id, config["VKONTAKTE"]["token"])
-                    # Очистка всех переменных
-                    await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                    return await number_review()
 
                 pattern_number_statement = r'\d{2}/\d{4}/\d{1,10}'
                 pattern_date = r'\d{4}-\d{2}-\d{2}'
@@ -682,8 +444,6 @@ def process_1():
                     ctx.set(f"{user_id}: number_date", message.text)
                     keyboard = await buttons.reception()
                     return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
-                    # keyboard = await buttons.filials()
-                    # return await message.answer("Выберите филиал", keyboard=keyboard)
 
                 else:
                     keyboard = await buttons.menu_menu()
@@ -729,11 +489,6 @@ def process_1():
 
             try:
                 payload_data = eval(message.payload)['cmd']
-
-                # if payload_data in ('application_locatiob_t', 'application_locatiob_s', 'application_locatiob_r'):
-                #     ctx.set(f'{user_id}: contact_location', payload_data[-1])
-                #     keyboard = await buttons.menu_menu()
-                #     return await message.answer("Напишите:\n- свой контактный номер телефона;\n- адрес по которому необходимо осуществить выезд специалиста;\n- адрес электронной почты.\n\nНапример: 89876543210, г. Томск, ул. Строительная, 35-89, tgi658@yandex.ru", keyboard=keyboard)
 
                 commands_1 = {
                     'soc_sphere': buttons.services_social,
@@ -783,8 +538,6 @@ def process_1():
                     elif payload_data == 'application_service_2':
                         ctx.set(f'{user_id}: service_application', '')
                         await post_application()
-                    # keyboard = await buttons.menu_menu()
-                    # return await message.answer("Фамилия Имя Отчество / Наименование заказчика", keyboard=keyboard)
 
             except:
 
@@ -821,17 +574,6 @@ def process_1():
                     keyboard = await buttons.application_service()
                     return await message.answer("Выберите, для чего необходимо выездное обслуживание", keyboard=keyboard)
 
-                # elif ctx.get(f'{user_id}: application_service') == '1':
-                #     if ctx.get(f'{user_id}: fio_application') == 'None':
-                #         ctx.set(f'{user_id}: fio_application', message.text)
-                #         keyboard = await buttons.services_section('12345')
-                #         return await message.answer("Выберите услугу", keyboard=keyboard)
-
-                # elif ctx.get(f'{user_id}: application_service') == '2':
-                #     if ctx.get(f'{user_id}: fio_application') == 'None':
-                #         ctx.set(f'{user_id}: fio_application', message.text)
-                #         ctx.set(f'{user_id}: service_application', '')
-                #         await post_application()
                 else:
                     ctx.set(f'{user_id}: contact_application', 'None')
                     keyboard = await buttons.menu_menu()
@@ -956,6 +698,7 @@ def process_1():
                 phone = ctx.get(f'{user_id}: phone')
 
                 res = await base(user_id = user_id, tel = phone).phone_input()
+                await base(user_id = user_id, tel = phone).agreement_input()
 
                 if not res:
                     return await message.answer("Введённый вами номер уже кем-то используется. Возможно, вы ошиблись при вводе. Попробуйте ещё раз.")
@@ -972,6 +715,122 @@ def process_1():
 
             else:
                 return await message.answer("Пожалуйста, убедитесь, что введённый вами номер телефона начинается с +7 или 8 и состоит из 11 цифр, без каких-либо знаков препинания. Возможно, вы ошиблись при вводе. Попробуйте ещё раз.")
+        except Exception as e:
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
+            keyboard = await buttons.menu_menu()
+            return await message.answer("Ошибка соединения с сервером", keyboard=keyboard)
+
+    @bot.on.message(state=SuperStates.AGREEMENT_INPUT)
+    async def agreement_input(message: Message):
+        try:
+            user_id = message.from_id
+            users_info = await bot.api.users.get(message.from_id)
+
+            async def agreement_scenario_inside_filials():
+                # answer = await base(user_id = user_id).phone_select()
+
+                # agreement_answer = await base(user_id = user_id).agreement_select()
+
+                ctx.set(f'{user_id}: agreement', '')
+
+                # if not agreement_answer:
+                #     async def read_file():
+                #         async with aiofiles.open('files\\agreement.txt', mode='r', encoding='utf-8') as file:
+                #             contents = await file.read()
+                #             return contents
+
+                #     if answer[0]:
+                #         ctx.set(f'{user_id}: phone', answer[1][0][0])
+                #     await bot.state_dispenser.set(message.peer_id, SuperStates.AGREEMENT_INPUT)
+                #     keyboard = await buttons.agreement_yes_no()
+                #     return await message.answer(f"{await read_file()}", keyboard=keyboard)
+
+                await base(user_id=user_id).base_count_record()
+                keyboard = await buttons.filials()
+                await bot.state_dispenser.set(message.peer_id, SuperStates.FILIALS)
+                await message.answer("Обращаем Ваше внимание, что прием осуществляется только при соответствии информации, указанной в талоне, с данными заявителя.")
+                await message.answer("Записаться на приём вы так же можете:\n- в личном кабинете на официальном сайте МФЦ https://md.tomsk.ru;\n- через чат-бот ВКонтакте https://vk.com/im?sel=-224967611;\n- через сектор информирования в отделах МФЦ;\n- через контакт-центр МФЦ по номерам  8-800-350-08-50 (звонок бесплатный), 602-999.")
+                return await message.answer("Выберите филиал", keyboard=keyboard)
+
+            async def agreement_scenario_inside_application():
+                # answer = await base(user_id = user_id).phone_select()
+
+                # agreement_answer = await base(user_id = user_id).agreement_select()
+
+                ctx.set(f'{user_id}: agreement', '')
+
+                # if not agreement_answer:
+                #     async def read_file():
+                #         async with aiofiles.open('files\\agreement.txt', mode='r', encoding='utf-8') as file:
+                #             contents = await file.read()
+                #             return contents
+
+                #     if answer[0]:
+                #         ctx.set(f'{user_id}: phone', answer[1][0][0])
+                #     await bot.state_dispenser.set(message.peer_id, SuperStates.AGREEMENT_INPUT)
+                #     keyboard = await buttons.agreement_yes_no()
+                #     return await message.answer(f"{await read_file()}", keyboard=keyboard)
+
+                await base(user_id=user_id).base_count_application()
+                keyboard = await buttons.application()
+                await bot.state_dispenser.set(message.peer_id, SuperStates.FILIALS)
+                return await message.answer("Услуга по выезду сотрудника МФЦ к заявителю для приёма заявлений и документов, а так же доставки результатов предоставления услуг осуществляется:\n- платно (для всех)\n- бесплатно (для отдельных категорий граждан).", keyboard=keyboard)
+
+
+            async def agreement_scenario_outside(agreement_input):
+                phone = ctx.get(f'{user_id}: phone')
+                await base(user_id = user_id, tel = phone).agreement_input(agreement_input)
+
+                if agreement_input == 0:
+                    await message.answer("Обработка персональных данных необходима для продолжения работы с сервисом.\n\nМы понимаем, что ваша конфиденциальность важна для вас. Однако, чтобы вы могли пользоваться всеми преимуществами нашего сервиса, нам необходимо получить ваше согласие на обработку персональных данных.")
+                    await bot.state_dispenser.set(message.peer_id, SuperStates.FILIALS)
+                    await buttons.menu(user_id, config["VKONTAKTE"]["token"])
+                    # Очистка всех переменных
+                    await reset_ctx(user_id)
+                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+
+                answer = await base(user_id = user_id).phone_select()
+
+                if answer[0]:
+
+                    agreement = ctx.get(f'{user_id}: agreement')
+
+                    if agreement == 'filials':
+                        return await agreement_scenario_inside_filials()
+
+                    elif agreement == 'application':
+                        return await agreement_scenario_inside_application()
+
+                    ctx.set(f'{user_id}: phone', answer[1][0][0])
+
+                    photo = "photo-224967611_457239778"
+
+                    await bot.state_dispenser.set(message.peer_id, SuperStates.FILIALS)
+                    await buttons.menu(user_id, config["VKONTAKTE"]["token"])
+                    # Очистка всех переменных
+                    await reset_ctx(user_id)
+                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню', attachment=photo)
+                else:
+                    await bot.state_dispenser.set(message.peer_id, SuperStates.PHONE_INPUT)
+                    return await message.answer("Для полноценного пользования чат-ботом необходимо пройти регистрацию. Пожалуйста, укажите ВАШ постоянный номер телефона, который будет связан с вашим аккаунтом.(например, 88003500850)")
+
+            try:
+                payload_data = eval(message.payload)['cmd']
+
+                if payload_data == 'yes':
+                    await agreement_scenario_outside(1)
+                elif payload_data == 'no':
+                    await agreement_scenario_outside(0)
+
+            except:
+                keyboard = await buttons.menu_menu()
+                return await message.answer("Вы ввели некорректные данные. Попробуйте ввести данные ещё раз.", keyboard=keyboard)
+
         except Exception as e:
             # Вывод подробной информации об ошибке
             print(f"Поймано исключение: {type(e).__name__}")
@@ -1817,51 +1676,6 @@ def process_1():
             try:
                 payload_data = eval(message.payload)['cmd']
 
-                # if payload_data == 'tomsk':
-                #     ctx.set(f'{user_id}: event_location', 'tomsk')
-                #     keyboard = await buttons.events('tomsk')
-                #     keyboard_data = json.loads(keyboard)
-                #     payload_value = keyboard_data['buttons'][0][0]['action']['payload']
-                #     payload = eval(str(payload_value))['cmd']
-                #     if payload == 'back_1':
-                #         return await message.answer("В этом регионе нет событий", keyboard=keyboard)
-                #     else:
-                #         return await message.answer("Выберите дату", keyboard=keyboard)
-
-                # elif payload_data == 'tomsk_obl':
-                #     ctx.set(f'{user_id}: event_location', 'tomsk_oblast')
-                #     keyboard = await buttons.events('tomsk_oblast')
-                #     keyboard_data = json.loads(keyboard)
-                #     payload_value = keyboard_data['buttons'][0][0]['action']['payload']
-                #     payload = eval(str(payload_value))['cmd']
-                #     if payload == 'back_1':
-                #         return await message.answer("В этом регионе нет событий", keyboard=keyboard)
-                #     else:
-                #         return await message.answer("Выберите дату", keyboard=keyboard)
-
-                # elif payload_data == 'seversk':
-                #     ctx.set(f'{user_id}: event_location', 'seversk')
-                #     keyboard = await buttons.events('seversk')
-                #     keyboard_data = json.loads(keyboard)
-                #     payload_value = keyboard_data['buttons'][0][0]['action']['payload']
-                #     payload = eval(str(payload_value))['cmd']
-                #     if payload == 'back_1':
-                #         return await message.answer("В этом регионе нет событий", keyboard=keyboard)
-                #     else:
-                #         return await message.answer("Выберите дату", keyboard=keyboard)
-
-                # if ctx.get(f'{user_id}: event_location') == 'seversk':
-                #     if payload_data == 'yes':
-                #         await base(user_id=user_id).events('seversk', ctx.get(f'{user_id}: event_date'), 'VK')
-                #         await bot.state_dispenser.set(message.peer_id, SuperStates.FILIALS)
-                #         await buttons.menu(user_id, config["VKONTAKTE"]["token"])
-                #         ctx.set(f'{user_id}: event_location', 'None')
-                #         # Очистка всех переменных
-                #         await reset_ctx(user_id)
-                #         return await message.answer("Уведомление о событии вам придёт за день до его начала.\n\nПривет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
-                #     elif payload_data == 'no':
-                #         keyboard = await buttons.events('seversk')
-                #         return await message.answer("Выберите событие", keyboard=keyboard)
                 if ctx.get(f'{user_id}: event_location') == 'tomsk':
                     if payload_data == 'yes':
                         await base(user_id=user_id).events('tomsk', ctx.get(f'{user_id}: event_date'), 'VK')
@@ -1874,18 +1688,6 @@ def process_1():
                     elif payload_data == 'no':
                         keyboard = await buttons.events('tomsk')
                         return await message.answer("Выберите событие", keyboard=keyboard)
-                # elif ctx.get(f'{user_id}: event_location') == 'tomsk_oblast':
-                #     if payload_data == 'yes':
-                #         await base(user_id=user_id).events('tomsk_oblast', ctx.get(f'{user_id}: event_date'), 'VK')
-                #         await bot.state_dispenser.set(message.peer_id, SuperStates.FILIALS)
-                #         await buttons.menu(user_id, config["VKONTAKTE"]["token"])
-                #         ctx.set(f'{user_id}: event_location', 'None')
-                #         # Очистка всех переменных
-                #         await reset_ctx(user_id)
-                #         return await message.answer("Уведомление о событии вам придёт за день до его начала.\n\nПривет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
-                #     elif payload_data == 'no':
-                #         keyboard = await buttons.events('tomsk_oblast')
-                #         return await message.answer("Выберите событие", keyboard=keyboard)
 
                 pattern_date = r'^\d{4}-\d{2}-\d{2}$'
 
@@ -2145,7 +1947,7 @@ def process_1():
                 elif payload_data == 'cons_grajd_1':
 
                     photo_1 = 'photo-224967611_457239833'
-                    photo_2 = 'photo-224967611_457239834'
+                    photo_2 = 'photo-224967611_457239846'
                     photo_3 = 'photo-224967611_457239835'
 
                     condition = True
@@ -2545,6 +2347,25 @@ def process_1():
                 ctx.set(f'{user_id}: category_application', privileges[payload_data])
 
             if payload_data == 'filials' or payload_data == 'back_1' or payload_data == 'back':
+
+                answer = await base(user_id = user_id).phone_select()
+
+                agreement_answer = await base(user_id = user_id).agreement_select()
+
+                ctx.set(f'{user_id}: agreement', 'filials')
+
+                if not agreement_answer[0] or agreement_answer[1] == '0':
+                    async def read_file():
+                        async with aiofiles.open('files\\agreement.txt', mode='r', encoding='utf-8') as file:
+                            contents = await file.read()
+                            return contents
+
+                    if answer[0]:
+                        ctx.set(f'{user_id}: phone', answer[1][0][0])
+                    await bot.state_dispenser.set(message.peer_id, SuperStates.AGREEMENT_INPUT)
+                    keyboard = await buttons.agreement_yes_no()
+                    return await message.answer(f"{await read_file()}", keyboard=keyboard)
+
                 await base(user_id=user_id).base_count_record()
                 keyboard = await buttons.filials()
                 await message.answer("Обращаем Ваше внимание, что прием осуществляется только при соответствии информации, указанной в талоне, с данными заявителя.")
@@ -2583,8 +2404,7 @@ def process_1():
             elif payload_data == 'events' or payload_data == 'back_1' or payload_data == 'back':
                 await base(user_id=user_id).base_count_events()
                 await bot.state_dispenser.set(message.peer_id, SuperStates.EVENTS)
-                # keyboard = await buttons.filials('12345')
-                # return await message.answer("Выберите филиал", keyboard=keyboard)
+
                 ctx.set(f'{user_id}: event_location', 'tomsk')
                 keyboard = await buttons.events('tomsk')
                 keyboard_data = json.loads(keyboard)
@@ -2597,14 +2417,25 @@ def process_1():
 
             elif payload_data == 'application':
 
-                # async def read_file():
-                #     async with aiofiles.open('files_gr\\application.txt', mode='r', encoding='utf-8') as file:
-                #         contents = await file.read()
-                #         return contents
+                answer = await base(user_id = user_id).phone_select()
+
+                agreement_answer = await base(user_id = user_id).agreement_select()
+
+                ctx.set(f'{user_id}: agreement', 'application')
+
+                if not agreement_answer[0] or agreement_answer[1] == '0':
+                    async def read_file():
+                        async with aiofiles.open('files\\agreement.txt', mode='r', encoding='utf-8') as file:
+                            contents = await file.read()
+                            return contents
+
+                    if answer[0]:
+                        ctx.set(f'{user_id}: phone', answer[1][0][0])
+                    await bot.state_dispenser.set(message.peer_id, SuperStates.AGREEMENT_INPUT)
+                    keyboard = await buttons.agreement_yes_no()
+                    return await message.answer(f"{await read_file()}", keyboard=keyboard)
 
                 await base(user_id=user_id).base_count_application()
-                # keyboard = await buttons.menu_menu()
-                # return await message.answer(f"{await read_file()}\n\nНапишите:\n- свой контактный номер телефона;\n- адрес по которому необходимо осуществить выезд специалиста;\n- адрес электронной почты.\n\nНапример: 89876543210, г. Томск, ул. Строительная, 35-89, tgi658@yandex.ru", keyboard=keyboard)
                 keyboard = await buttons.application()
                 return await message.answer("Услуга по выезду сотрудника МФЦ к заявителю для приёма заявлений и документов, а так же доставки результатов предоставления услуг осуществляется:\n- платно (для всех)\n- бесплатно (для отдельных категорий граждан).", keyboard=keyboard)
 
@@ -2863,9 +2694,29 @@ def process_1():
                 return await message.answer("Вы ввели некорректные данные", keyboard=keyboard)
 
             if payload_data == 'back' or payload_data == 'filials':
+
+                answer = await base(user_id = user_id).phone_select()
+
+                agreement_answer = await base(user_id = user_id).agreement_select()
+
+                ctx.set(f'{user_id}: agreement', 'filials')
+
+                if not agreement_answer[0] or agreement_answer[1] == '0':
+                    async def read_file():
+                        async with aiofiles.open('files\\agreement.txt', mode='r', encoding='utf-8') as file:
+                            contents = await file.read()
+                            return contents
+
+                    if answer[0]:
+                        ctx.set(f'{user_id}: phone', answer[1][0][0])
+                    await bot.state_dispenser.set(message.peer_id, SuperStates.AGREEMENT_INPUT)
+                    keyboard = await buttons.agreement_yes_no()
+                    return await message.answer(f"{await read_file()}", keyboard=keyboard)
+
                 await bot.state_dispenser.set(message.peer_id, SuperStates.FILIALS)
                 keyboard = await buttons.filials()
-                await message.answer("Обращаем Ваше внимание, что прием осуществляется только при соответствии информации, указанной в талоне, с данными заявителя. Записаться на приём вы так же можете в личном кабинете на официальном сайте МФЦ (https://md.tomsk.ru), через чат-бот Телеграмм (https://t.me/mdtomskbot) и через сектор информирования в отделах МФЦ.")
+                await message.answer("Обращаем Ваше внимание, что прием осуществляется только при соответствии информации, указанной в талоне, с данными заявителя.")
+                await message.answer("Записаться на приём вы так же можете:\n- в личном кабинете на официальном сайте МФЦ https://md.tomsk.ru;\n- через чат-бот ВКонтакте https://vk.com/im?sel=-224967611;\n- через сектор информирования в отделах МФЦ;\n- через контакт-центр МФЦ по номерам  8-800-350-08-50 (звонок бесплатный), 602-999.")
                 return await message.answer("Выберите филиал", keyboard=keyboard)
             elif payload_data == 'back_1':
                 keyboard = await buttons.services_section(ctx.get(f'{user_id}: department'))
@@ -2945,20 +2796,8 @@ def process_1():
                 if payload_data == 'back':
 
                     """Обнуление переменных пользователя"""
-                    # ctx.set(f'{user_id}: field_1', 'None')
-                    # ctx.set(f'{user_id}: field_2', 'None')
-                    # ctx.set(f'{user_id}: field_3', 'None')
-                    # ctx.set(f'{user_id}: field_4', 'None')
-                    # ctx.set(f'{user_id}: field_5', 'None')
-                    # ctx.set(f'{user_id}: field_6', 'None')
-                    # ctx.set(f'{user_id}: field_7', 'None')
-                    # ctx.set(f'{user_id}: date', 'None')
-                    # ctx.set(f'{user_id}: time', 'None')
-                    # ctx.set(f'{user_id}: tel_cache', 'None')
-                    # ctx.set(f'{user_id}: fio_cache', 'None')
-                    # ctx.set(f'{user_id}: yes_no_cache', 'None')
                     ctx.set(f'{user_id}: code_counter', 0)
-                    # ctx.set(f'{user_id}: times', 'None')
+
                     for context in contexts:
                             ctx.set(f"{user_id}: {context}", "None")
 
@@ -2970,20 +2809,8 @@ def process_1():
                     await notification_delete_coupon(user_id, message)
 
                     """Обнуление переменных пользователя"""
-                    # ctx.set(f'{user_id}: field_1', 'None')
-                    # ctx.set(f'{user_id}: field_2', 'None')
-                    # ctx.set(f'{user_id}: field_3', 'None')
-                    # ctx.set(f'{user_id}: field_4', 'None')
-                    # ctx.set(f'{user_id}: field_5', 'None')
-                    # ctx.set(f'{user_id}: field_6', 'None')
-                    # ctx.set(f'{user_id}: field_7', 'None')
-                    # ctx.set(f'{user_id}: date', 'None')
-                    # ctx.set(f'{user_id}: time', 'None')
-                    # ctx.set(f'{user_id}: tel_cache', 'None')
-                    # ctx.set(f'{user_id}: fio_cache', 'None')
-                    # ctx.set(f'{user_id}: yes_no_cache', 'None')
                     ctx.set(f'{user_id}: code_counter', 0)
-                    # ctx.set(f'{user_id}: times', 'None')
+
                     for context in contexts:
                             ctx.set(f"{user_id}: {context}", "None")
 
@@ -3592,6 +3419,7 @@ def process_1():
     async def handler(message: Message):
         try:
             user_id = message.from_id
+            users_info = await bot.api.users.get(message.from_id)
 
             try:
                 payload_data = eval(message.payload)['cmd']
@@ -3627,9 +3455,23 @@ def process_1():
 
             answer = await base(user_id = user_id).phone_select()
 
+            agreement_answer = await base(user_id = user_id).agreement_select()
+
+            if not agreement_answer:
+                async def read_file():
+                    async with aiofiles.open('files\\agreement.txt', mode='r', encoding='utf-8') as file:
+                        contents = await file.read()
+                        return contents
+
+                if answer[0]:
+                    ctx.set(f'{user_id}: phone', answer[1][0][0])
+                await bot.state_dispenser.set(message.peer_id, SuperStates.AGREEMENT_INPUT)
+                keyboard = await buttons.agreement_yes_no()
+                return await message.answer(f"{await read_file()}", keyboard=keyboard)
+
             if answer[0]:
+
                 ctx.set(f'{user_id}: phone', answer[1][0][0])
-                users_info = await bot.api.users.get(message.from_id)
 
                 photo = "photo-224967611_457239778"
 

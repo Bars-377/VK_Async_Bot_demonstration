@@ -760,7 +760,7 @@ class base:
                 }
         except Exception as e:
             # К сожалению не удалось выяснить статус документов по вашему номеру
-            print("BASE:", e)
+            print("BASE_readiness_status:", e)
             result = {
                 "status_eng": "",
                 "status_rus": "",
@@ -865,7 +865,7 @@ class base:
                 dates.append(result[i][0])
 
         except Exception as e:
-            print('BASE:', e)
+            print('BASE_base_get_events_dates:', e)
         return dates
 
     # async def base_get_events_event(self, location, date):
@@ -1065,7 +1065,7 @@ class base:
             else:
                 times = None
         except Exception as e:
-            print('BASE:', e)
+            print('BASE_base_get_date_and_time:', e)
 
         return dates, times
 
@@ -1162,7 +1162,7 @@ class base:
                         await conn.commit()
 
             except Exception as e:
-                print('BASE:', e)
+                print('BASE_base_record:', e)
         else:
             res = {
                 "code": "err_no_slots",
@@ -1198,8 +1198,39 @@ class base:
                         answer = False
 
         except Exception as e:
-            print('BASE:', e)
+            print('BASE_phone_select:', e)
         return answer, result, result_1
+
+    async def agreement_select(self):
+
+        try:
+            pool = await aiomysql.create_pool(
+                host="172.18.11.103",
+                user="root",
+                password="enigma1418",
+                db="mdtomskbot",
+                autocommit=True,
+                connect_timeout=2
+            )
+            async with pool.acquire() as conn:
+                async with conn.cursor() as cursor:
+                    try:
+                        await cursor.execute(
+                            f"SELECT vk FROM agreement WHERE id_vk = '{self.user_id}'"
+                        )
+                        result = await cursor.fetchall()
+
+                        if int(result[0][0]) or not int(result[0][0]):
+                            # значениe vk существует
+                            answer = True
+                        else:
+                            # значениe vk не существует
+                            answer = False
+                    except:
+                        answer = False
+        except Exception as e:
+            print('BASE_agreement_select:', e)
+        return answer, str(result[0][0])
 
     async def phone_input(self):
         try:
@@ -1228,28 +1259,23 @@ class base:
                     try:
                         await cursor.execute(
                             f"INSERT INTO notification (ani, id_vk) "
-                            f"VALUES ('{int(self.tel)}', {self.user_id});"
+                            f"VALUES ('{int(self.tel)}', '{self.user_id}');"
                         )
                     except:
                         pass
                     try:
                         await cursor.execute(
-                            f"UPDATE notification SET id_vk = '{self.user_id}' WHERE ani = '{int(self.tel)}' "
+                            f"UPDATE notification SET id_vk = '{self.user_id}' WHERE ani = '{int(self.tel)}';"
                         )
                     except:
                         pass
 
         except Exception as e:
-            print('BASE:', e)
+            print('BASE_phone_input:', e)
         return res
 
-    async def phone_input_new(self):
-        import datetime
-        date = datetime.datetime.now().date()
-        # time = str(datetime.datetime.now().time())[:-7]
-        # time_obj = datetime.datetime.strptime(time, "%H:%M:%S")
-        # new_time_obj = time_obj + datetime.timedelta(hours=7)
-        # time = new_time_obj.strftime("%H:%M:%S")
+    async def agreement_input(self, *args):
+
         try:
             pool = await aiomysql.create_pool(
                 host="172.18.11.103",
@@ -1262,50 +1288,144 @@ class base:
             async with pool.acquire() as conn:
                 async with conn.cursor() as cursor:
 
+                    # Проверяем, есть ли уже запись с таким же номером телефона
                     await cursor.execute(
-                        f"SELECT date FROM notification WHERE id_vk = '{self.user_id}'"
+                        f"SELECT id_vk FROM agreement WHERE tel = '{str(self.tel).replace('+7', '8')}';"
                     )
-                    result_date = await cursor.fetchall()
+                    existing_id = await cursor.fetchone()
 
-                    await cursor.execute(
-                        f"SELECT ani FROM notification WHERE id_vk = '{self.user_id}'"
-                    )
-                    result_phone = await cursor.fetchall()
-
-                    await cursor.execute(
-                        f"SELECT new_ani FROM notification WHERE id_vk = '{self.user_id}'"
-                    )
-                    result_phone_new = await cursor.fetchall()
-
-                    if result_date[0][0] == None or result_date[0][0] == '':
-
+                    if existing_id:
+                        # Если запись с таким номером телефона уже существует, обновляем ее
                         await cursor.execute(
-                            f"UPDATE notification SET new_ani = '{self.tel}' WHERE ani = '{int(result_phone[0][0])}' "
+                            f"UPDATE agreement SET id_vk = '{self.user_id}', vk = '{args[0]}' WHERE tel = '{str(self.tel).replace('+7', '8')}';"
                         )
-                        await cursor.execute(
-                            f"UPDATE notification SET date = '{date}' WHERE ani = '{int(result_phone[0][0])}' "
-                        )
-
-                        result = True
                     else:
-                        from datetime import datetime
-                        result_date = datetime.strptime(result_date[0][0], "%Y-%m-%d").date()
-                        if result_date != date:
-                            await cursor.execute(
-                                f"UPDATE notification SET new_ani = '{self.tel}' WHERE ani = '{int(result_phone[0][0])}' "
-                            )
-                            await cursor.execute(
-                                f"UPDATE notification SET date = '{date}' WHERE ani = '{int(result_phone[0][0])}' "
-                            )
-                            result = True
-                        elif result_phone[0][0] == self.tel or result_phone_new[0][0] == self.tel:
-                            result = True
-                        else:
-                            result = False
+                        # Если записи с таким номером телефона нет, создаем новую
+                        await cursor.execute(
+                            f"INSERT INTO agreement (id_vk, vk, tel)"
+                            f"VALUES ('{self.user_id}', '{args[0]}', '{str(self.tel).replace('+7', '8')}');"
+                        )
 
         except Exception as e:
-            print('BASE:', e)
-        return result
+            print('BASE_agreement_input:', e)
+        return
+
+    # async def phone_input_new(self):
+    #     import datetime
+    #     date = datetime.datetime.now().date()
+    #     # time = str(datetime.datetime.now().time())[:-7]
+    #     # time_obj = datetime.datetime.strptime(time, "%H:%M:%S")
+    #     # new_time_obj = time_obj + datetime.timedelta(hours=7)
+    #     # time = new_time_obj.strftime("%H:%M:%S")
+    #     try:
+    #         pool = await aiomysql.create_pool(
+    #             host="172.18.11.103",
+    #             user="root",
+    #             password="enigma1418",
+    #             db="mdtomskbot",
+    #             autocommit=True,
+    #             connect_timeout=2
+    #         )
+    #         async with pool.acquire() as conn:
+    #             async with conn.cursor() as cursor:
+
+    #                 await cursor.execute(
+    #                     f"SELECT date FROM notification WHERE id_vk = '{self.user_id}'"
+    #                 )
+    #                 result_date = await cursor.fetchall()
+
+    #                 await cursor.execute(
+    #                     f"SELECT ani FROM notification WHERE id_vk = '{self.user_id}'"
+    #                 )
+    #                 result_phone = await cursor.fetchall()
+
+    #                 await cursor.execute(
+    #                     f"SELECT new_ani FROM notification WHERE id_vk = '{self.user_id}'"
+    #                 )
+    #                 result_phone_new = await cursor.fetchall()
+
+    #                 if result_date[0][0] == None or result_date[0][0] == '':
+
+    #                     await cursor.execute(
+    #                         f"UPDATE notification SET new_ani = '{self.tel}' WHERE ani = '{int(result_phone[0][0])}' "
+    #                     )
+    #                     await cursor.execute(
+    #                         f"UPDATE notification SET date = '{date}' WHERE ani = '{int(result_phone[0][0])}' "
+    #                     )
+
+    #                     result = True
+    #                 else:
+    #                     from datetime import datetime
+    #                     result_date = datetime.strptime(result_date[0][0], "%Y-%m-%d").date()
+    #                     if result_date != date:
+    #                         await cursor.execute(
+    #                             f"UPDATE notification SET new_ani = '{self.tel}' WHERE ani = '{int(result_phone[0][0])}' "
+    #                         )
+    #                         await cursor.execute(
+    #                             f"UPDATE notification SET date = '{date}' WHERE ani = '{int(result_phone[0][0])}' "
+    #                         )
+    #                         result = True
+    #                     elif result_phone[0][0] == self.tel or result_phone_new[0][0] == self.tel:
+    #                         result = True
+    #                     else:
+    #                         result = False
+
+    #     except Exception as e:
+    #         print('BASE_phone_input_new:', e)
+    #     return result
+
+    async def update_notification(self, cursor, phone, date):
+        # Обновляем запись в notification новым номером телефона и датой
+        await cursor.execute(
+            f"UPDATE notification SET new_ani = '{self.tel}', date = '{date}' WHERE ani = '{int(phone)}'"
+        )
+
+    async def phone_input_new(self):
+        try:
+            import datetime
+
+            # Устанавливаем текущую дату
+            date = datetime.datetime.now().date()
+
+            # Подключаемся к базе данных
+            pool = await aiomysql.create_pool(
+                host="172.18.11.103",
+                user="root",
+                password="enigma1418",
+                db="mdtomskbot",
+                autocommit=True,
+                connect_timeout=2
+            )
+
+            async with pool.acquire() as conn:
+                async with conn.cursor() as cursor:
+                    # Получаем текущие данные из таблицы notification
+                    await cursor.execute(
+                        f"SELECT date, ani, new_ani FROM notification WHERE id_vk = '{self.user_id}'"
+                    )
+                    result = await cursor.fetchone()
+
+                    if result:
+                        result_date, result_phone, result_phone_new = result
+
+                        # Проверяем, если дата пуста (None или пустая строка)
+                        if not result_date:
+                            await self.update_notification(cursor, result_phone, date)
+                            return True
+
+                        # Сравниваем даты и обновляем данные при необходимости
+                        result_date = datetime.datetime.strptime(result_date, "%Y-%m-%d").date()
+                        if result_date != date:
+                            await self.update_notification(cursor, result_phone, date)
+                            return True
+                        elif result_phone == self.tel or result_phone_new == self.tel:
+                            return True
+
+                    return False
+
+        except Exception as e:
+            print('BASE_phone_input_new:', e)
+            return False
 
     async def base_count_record(self):
 
@@ -1332,7 +1452,7 @@ class base:
                     )
 
         except Exception as e:
-            print('BASE', e)
+            print('BASE_base_count_record', e)
         return
 
     async def base_count_application(self):
@@ -1360,7 +1480,7 @@ class base:
                     )
 
         except Exception as e:
-            print('BASE', e)
+            print('BASE_base_count_application', e)
         return
 
     async def base_count_grade(self):
@@ -1388,7 +1508,7 @@ class base:
                     )
 
         except Exception as e:
-            print('BASE', e)
+            print('BASE_base_count_grade', e)
         return
 
     async def base_review(*args):
@@ -1411,7 +1531,7 @@ class base:
                     )
 
         except Exception as e:
-            print('BASE', e)
+            print('BASE_base_review', e)
         return
 
     async def base_post_application(*args):
@@ -1464,7 +1584,7 @@ class base:
                     )
 
         except Exception as e:
-            print('BASE:', e)
+            print('BASE_base_count_status:', e)
         return
 
     async def base_count_inf(self):
@@ -1492,7 +1612,7 @@ class base:
                     )
 
         except Exception as e:
-            print('BASE:', e)
+            print('BASE_base_count_inf:', e)
         return
 
     async def base_count_events(self):
@@ -1520,7 +1640,7 @@ class base:
                     )
 
         except Exception as e:
-            print('BASE:', e)
+            print('BASE_base_count_events:', e)
         return
 
     async def base_count_cons_mfc(self):
@@ -1548,7 +1668,7 @@ class base:
                     )
 
         except Exception as e:
-            print('BASE:', e)
+            print('BASE_base_count_cons_mfc:', e)
         return
 
     async def base_count_cancel_record(self):
@@ -1576,7 +1696,7 @@ class base:
                     )
 
         except Exception as e:
-            print('BASE:', e)
+            print('BASE_base_count_cancel_record:', e)
         return
 
     async def base_count_anniversary(self):
@@ -1603,7 +1723,7 @@ class base:
                     )
 
         except Exception as e:
-            print('BASE:', e)
+            print('BASE_base_count_anniversary:', e)
         return
 
     async def base_anniversary(self, text):
@@ -1628,7 +1748,7 @@ class base:
                     await cursor.execute(f"INSERT INTO anniversary (text, date, sender) VALUES ('{text}', '{date}', '{self.user_id}');")
 
         except Exception as e:
-            print('BASE:', e)
+            print('BASE_base_anniversary:', e)
         return
 
     async def events(self, event, date, platform):
@@ -1665,7 +1785,7 @@ class base:
                     )
 
         except Exception as e:
-            print('BASE:', e)
+            print('BASE_events:', e)
         return
 
     async def information_about_coupons(*args):
@@ -1784,7 +1904,7 @@ class base:
                     "code": 'no'
                 }
         except Exception as e:
-            print('BASE', e)
+            print('BASE_information_about_coupons', e)
 
             res = {
                 "code": "error"
@@ -1810,7 +1930,6 @@ class base:
 
                 try:
 
-                    # date = str(datetime.datetime.now().date())
                     time_new = str(datetime.datetime.now().time())[:-7]
                     time_obj = datetime.datetime.strptime(time_new, "%H:%M:%S")
                     new_time_obj = time_obj + datetime.timedelta(hours=7)
@@ -1826,56 +1945,48 @@ class base:
                     )
                     async with pool.acquire() as conn:
                         async with conn.cursor() as cursor:
-                            # await cursor.execute(
-                            #     f"SELECT talon FROM notification WHERE id_vk = '{self.user_id}'"
-                            # )
-                            # talons = await cursor.fetchall()
-                            # await cursor.execute(
-                            #     f"SELECT department FROM notification WHERE id_vk = '{self.user_id}'"
-                            # )
-                            # departments = await cursor.fetchall()
-                            # await cursor.execute(
-                            #     f"SELECT dates FROM notification WHERE id_vk = '{self.user_id}'"
-                            # )
-                            # dates = await cursor.fetchall()
-
-                            # talons = list(filter(None, talons[0][0].split(", ")))
-                            # departments = list(filter(None, departments[0][0].split(", ")))
-                            # dates = list(filter(None, dates[0][0].split(", ")))
-                            # print(talons)
-                            # print(departments)
-                            # print(dates)
-
-                            # index_1 = talons.index(30)
-                            # index_2 = departments.index(30)
 
                             await cursor.execute(
                                 f"INSERT INTO forms (fio, tel, talon, department, date, time, platform) VALUES ('{fio}', '{phone_dummy}', '{talon}', '{department}', '{date}', '{time_new}', 'VK');"
                             )
 
-                            """ПОД ВОПРОСОМ"""
-                            await cursor.execute(
-                                f"DELETE FROM vkontakte_reg WHERE sender = '{self.user_id}' AND date = '{date}' AND talon = '{talon}' AND department = '{department}';"
-                            )
+                            # """ПОД ВОПРОСОМ"""
+                            # await cursor.execute(
+                            #     f"DELETE FROM vkontakte_reg WHERE sender = '{self.user_id}' AND date = '{date}' AND talon = '{talon}' AND department = '{department}';"
+                            # )
 
                             await cursor.execute(
-                                f"SELECT * FROM notification;"
-                            )
-                            result = await cursor.fetchall()
+                                "DELETE FROM vkontakte_reg WHERE sender = %s AND date = %s AND talon = %s AND department = %s",
+                                (self.user_id, date, talon, department)
+)
+                            # await cursor.execute(
+                            #     f"SELECT * FROM notification;"
+                            # )
+                            # result = await cursor.fetchall()
 
-                            for x in result:
-                                id_vk = x[1]
-                                id_tb = x[2]
-                                if str(self.user_id) == id_vk:
-                                    await cursor.execute(
-                                        f"DELETE FROM telegram_reg WHERE ani = '{id_tb}' AND date = '{date}' AND talon = '{talon}' AND department = '{department}';"
-                                    )
+                            # for x in result:
+                            #     id_vk = x[1]
+                            #     id_tb = x[2]
+                            #     if str(self.user_id) == id_vk:
+                            #         await cursor.execute(
+                            #             f"DELETE FROM telegram_reg WHERE ani = '{id_tb}' AND date = '{date}' AND talon = '{talon}' AND department = '{department}';"
+                            #         )
+
+                            await cursor.execute(
+                                """
+                                DELETE FROM telegram_reg
+                                WHERE ani IN (SELECT id_tb FROM notification WHERE id_vk = %s)
+                                AND date = %s
+                                AND talon = %s
+                                AND department = %s;
+                                """, (self.user_id, date, talon, department)
+                            )
 
                 except Exception as e:
-                    print('BASE 1:', e)
+                    print('BASE_deep_delete_coupons:', e)
 
         except Exception as e:
-            print('BASE', e)
+            print('BASE_delete_coupons', e)
 
         return res
 
@@ -1904,7 +2015,7 @@ class base:
                     result = await cursor.fetchall()
 
         except Exception as e:
-            print('BASE:', e)
+            print('BASE_select_vkontakte_reg:', e)
 
         return result
 
@@ -1932,4 +2043,4 @@ class base:
                     )
 
         except Exception as e:
-            print('BASE:', e)
+            print('BASE_delete_vkontakte_reg:', e)

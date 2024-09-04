@@ -514,11 +514,11 @@ class buttons:
 
     async def waiting_time(*args):
         keyboard = Keyboard(one_time=True, inline=False)
-        keyboard.add(Text("0-10 мин (5 баллов)", {"cmd": "0-10 мин (5 баллов)"}), color=KeyboardButtonColor.POSITIVE)
-        keyboard.add(Text("10-15 мин (4 балла)", {"cmd": "10-15 мин (4 балла)"}), color=KeyboardButtonColor.POSITIVE)
+        keyboard.add(Text("0-10 мин (5 баллов)", {"cmd": "5"}), color=KeyboardButtonColor.POSITIVE)
+        keyboard.add(Text("10-15 мин (4 балла)", {"cmd": "4"}), color=KeyboardButtonColor.POSITIVE)
         keyboard.row()
-        keyboard.add(Text("15-20 мин (2 балла)", {"cmd": "15-20 мин (2 балла)"}), color=KeyboardButtonColor.POSITIVE)
-        keyboard.add(Text("более 20 мин (1 балл)", {"cmd": "более 20 мин (1 балл)"}), color=KeyboardButtonColor.POSITIVE)
+        keyboard.add(Text("15-20 мин (2 балла)", {"cmd": "2"}), color=KeyboardButtonColor.POSITIVE)
+        keyboard.add(Text("более 20 мин (1 балл)", {"cmd": "1"}), color=KeyboardButtonColor.POSITIVE)
         keyboard.row()
         keyboard.add(Text("Назад", {"cmd": "back"}), color=KeyboardButtonColor.NEGATIVE)
         keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
@@ -557,10 +557,20 @@ class buttons:
         keyboard = keyboard.get_json()
         return keyboard
 
+    async def agreement_yes_no(*args):
+        keyboard = Keyboard(one_time=True, inline=False)
+        keyboard.add(Text("Согласен", {"cmd": "yes"}), color=KeyboardButtonColor.POSITIVE)
+        keyboard.add(Text("Не согласен", {"cmd": "no"}), color=KeyboardButtonColor.POSITIVE)
+        keyboard.row()
+        keyboard.add(Text("Назад", {"cmd": "back"}), color=KeyboardButtonColor.NEGATIVE)
+        keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
+        keyboard = keyboard.get_json()
+        return keyboard
+
     async def send(*args):
         keyboard = Keyboard(one_time=True, inline=False)
         keyboard.add(Text("Отправить пожелания!", {"cmd": "yes"}), color=KeyboardButtonColor.POSITIVE)
-        keyboard.add(Text("Календарь событий", {"cmd": "events"}), color=KeyboardButtonColor.POSITIVE)
+        # keyboard.add(Text("Календарь событий", {"cmd": "events"}), color=KeyboardButtonColor.POSITIVE)
         keyboard.row()
         keyboard.add(Text("Назад", {"cmd": "back"}), color=KeyboardButtonColor.NEGATIVE)
         keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
@@ -931,6 +941,15 @@ class buttons:
         keyboard = keyboard.get_json()
         return keyboard
 
+    async def grade(*args):
+        keyboard = Keyboard(one_time=True, inline=False)
+        keyboard.add(Text("Отправить без комментария", {"cmd": "1"}), color=KeyboardButtonColor.POSITIVE)
+        keyboard.row()
+        keyboard.add(Text("Назад", {"cmd": "back"}), color=KeyboardButtonColor.NEGATIVE)
+        keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
+        keyboard = keyboard.get_json()
+        return keyboard
+
     async def application(*args):
         keyboard = Keyboard(one_time=True, inline=False)
         keyboard.add(Text("Платный выезд", {"cmd": "application_1"}), color=KeyboardButtonColor.POSITIVE)
@@ -983,8 +1002,8 @@ class buttons:
 
     async def button_review(*args):
         keyboard = Keyboard(one_time=True, inline=False)
-        # keyboard.add(Text("Оценить качество предоставленной услуги", {"cmd": "button_review"}), color=KeyboardButtonColor.POSITIVE)
-        # keyboard.row()
+        keyboard.add(Text("Оценить качество предоставленной услуги", {"cmd": "button_review"}), color=KeyboardButtonColor.POSITIVE)
+        keyboard.row()
         keyboard.add(Text("Назад", {"cmd": "back"}), color=KeyboardButtonColor.NEGATIVE)
         keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
         keyboard = keyboard.get_json()
