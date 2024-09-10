@@ -1032,7 +1032,19 @@ class buttons:
                 keyboard.add(Text("Остальные даты", {"cmd": "date_ost"}), color=KeyboardButtonColor.POSITIVE)
                 keyboard.row()
                 break
-        if len(dates[0]["data"]) < 4:
+
+        # Преобразуем клавиатуру в JSON
+        keyboard_json = keyboard.get_json()
+
+        # Парсим JSON
+        keyboard_data = json.loads(keyboard_json)
+
+        # Проверка наличия кнопок и непустой последней строки
+        buttons = keyboard_data['buttons']
+        has_buttons = any(bool(row) for row in buttons)  # Проверка наличия хотя бы одной строки с кнопками
+        last_row = buttons[-1] if buttons else None  # Получаем последнюю строку
+
+        if has_buttons and any(bool(button) for button in last_row) and len(dates[0]["data"]) < 4:
             keyboard.row()
         keyboard.add(Text("Назад", {"cmd": "back"}), color=KeyboardButtonColor.NEGATIVE)
         keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
@@ -1061,7 +1073,19 @@ class buttons:
             if counter % 2 == 0:
                 keyboard.row()
                 row = True
-        if not row:
+
+        # Преобразуем клавиатуру в JSON
+        keyboard_json = keyboard.get_json()
+
+        # Парсим JSON
+        keyboard_data = json.loads(keyboard_json)
+
+        # Проверка наличия кнопок и непустой последней строки
+        buttons = keyboard_data['buttons']
+        has_buttons = any(bool(row) for row in buttons)  # Проверка наличия хотя бы одной строки с кнопками
+        last_row = buttons[-1] if buttons else None  # Получаем последнюю строку
+
+        if has_buttons and any(bool(button) for button in last_row) and not row:
             keyboard.row()
         keyboard.add(Text("Назад", {"cmd": "back"}), color=KeyboardButtonColor.NEGATIVE)
         keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
@@ -1103,8 +1127,20 @@ class buttons:
                     keyboard.row()
                     keyboard.add(Text("Назад", {"cmd": "back"}), color=KeyboardButtonColor.NEGATIVE)
                     break
+
+        # Преобразуем клавиатуру в JSON
+        keyboard_json = keyboard.get_json()
+
+        # Парсим JSON
+        keyboard_data = json.loads(keyboard_json)
+
+        # Проверка наличия кнопок и непустой последней строки
+        buttons = keyboard_data['buttons']
+        has_buttons = any(bool(row) for row in buttons)  # Проверка наличия хотя бы одной строки с кнопками
+        last_row = buttons[-1] if buttons else None  # Получаем последнюю строку
+
         if counter < 5:
-            if not row:
+            if has_buttons and any(bool(button) for button in last_row) and not row:
                 keyboard.row()
             keyboard.add(Text("Остальное время", {"cmd": "time_ost_2"}), color=KeyboardButtonColor.POSITIVE)
             keyboard.row()
@@ -1148,8 +1184,20 @@ class buttons:
                     keyboard.row()
                     keyboard.add(Text("Назад", {"cmd": "back"}), color=KeyboardButtonColor.NEGATIVE)
                     break
+
+        # Преобразуем клавиатуру в JSON
+        keyboard_json = keyboard.get_json()
+
+        # Парсим JSON
+        keyboard_data = json.loads(keyboard_json)
+
+        # Проверка наличия кнопок и непустой последней строки
+        buttons = keyboard_data['buttons']
+        has_buttons = any(bool(row) for row in buttons)  # Проверка наличия хотя бы одной строки с кнопками
+        last_row = buttons[-1] if buttons else None  # Получаем последнюю строку
+
         if counter < 5:
-            if not row:
+            if has_buttons and any(bool(button) for button in last_row) and not row:
                 keyboard.row()
             keyboard.add(Text("Остальное время", {"cmd": button}), color=KeyboardButtonColor.POSITIVE)
             keyboard.row()
@@ -1244,7 +1292,19 @@ class buttons:
                 if counter % 2 == 0:
                     keyboard.row()
                     row = True
-        if not row:
+
+        # Преобразуем клавиатуру в JSON
+        keyboard_json = keyboard.get_json()
+
+        # Парсим JSON
+        keyboard_data = json.loads(keyboard_json)
+
+        # Проверка наличия кнопок и непустой последней строки
+        buttons = keyboard_data['buttons']
+        has_buttons = any(bool(row) for row in buttons)  # Проверка наличия хотя бы одной строки с кнопками
+        last_row = buttons[-1] if buttons else None  # Получаем последнюю строку
+
+        if has_buttons and any(bool(button) for button in last_row) and not row:
             keyboard.row()
         keyboard.add(Text("Назад", {"cmd": "back"}), color=KeyboardButtonColor.NEGATIVE)
         keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)

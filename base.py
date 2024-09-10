@@ -1230,7 +1230,7 @@ class base:
                         answer = False
         except Exception as e:
             print('BASE_agreement_select:', e)
-        return answer, str(result[0][0])
+        return answer, str(result[0][0]) if answer else '0'
 
     async def phone_input(self):
         try:
@@ -1288,23 +1288,24 @@ class base:
             async with pool.acquire() as conn:
                 async with conn.cursor() as cursor:
 
-                    # Проверяем, есть ли уже запись с таким же номером телефона
-                    await cursor.execute(
-                        f"SELECT id_vk FROM agreement WHERE tel = '{str(self.tel).replace('+7', '8')}';"
-                    )
-                    existing_id = await cursor.fetchone()
-
-                    if existing_id:
-                        # Если запись с таким номером телефона уже существует, обновляем ее
-                        await cursor.execute(
-                            f"UPDATE agreement SET id_vk = '{self.user_id}', vk = '{args[0]}' WHERE tel = '{str(self.tel).replace('+7', '8')}';"
-                        )
+                    if not args:
+                        # Обновляем номер телефона пользователя
+                        query = "UPDATE agreement SET tel = %s WHERE id_vk = %s"
+                        await cursor.execute(query, (self.tel, self.user_id))
                     else:
-                        # Если записи с таким номером телефона нет, создаем новую
-                        await cursor.execute(
-                            f"INSERT INTO agreement (id_vk, vk, tel)"
-                            f"VALUES ('{self.user_id}', '{args[0]}', '{str(self.tel).replace('+7', '8')}');"
-                        )
+                        # Проверяем, есть ли запись с таким номером телефона
+                        check_query = "SELECT id_vk FROM agreement WHERE tel = %s"
+                        await cursor.execute(check_query, (self.tel,))
+                        existing_id = await cursor.fetchone()
+
+                        if existing_id:
+                            # Если запись существует, обновляем её
+                            update_query = "UPDATE agreement SET id_vk = %s, vk = %s WHERE tel = %s"
+                            await cursor.execute(update_query, (self.user_id, args[0], self.tel))
+                        else:
+                            # Если записи нет, создаем новую
+                            insert_query = "INSERT INTO agreement (id_vk, vk, tel) VALUES (%s, %s, %s)"
+                            await cursor.execute(insert_query, (self.user_id, args[0], self.tel))
 
         except Exception as e:
             print('BASE_agreement_input:', e)
