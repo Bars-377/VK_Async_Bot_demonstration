@@ -14,27 +14,42 @@ from base import *
 config = configparser.ConfigParser()
 config.read("config.ini")
 
-# Создаем логгер для модуля vkbottle
-logger = logging.getLogger("vkbottle")
-logger.setLevel(logging.INFO)
+from loguru import logger
 
-# Создаем логгер для модуля mysql.connector
-mysql_logger = logging.getLogger("mysql.connector")
-mysql_logger.setLevel(logging.INFO)
+# Отключаем стандартный логгер vkbottle
+logging.getLogger("vkbottle").disabled = True
 
-# Создаем логгер для модуля urllib3
-urllib3_logger = logging.getLogger("urllib3")
-urllib3_logger.setLevel(logging.INFO)  # Игнорируем сообщения уровня DEBUG и INFO
+# Настраиваем loguru, чтобы игнорировать логи
+logger.remove()  # Удаляем все существующие обработчики loguru
 
-"""ЭТО ИГНОРИРУЕТ 'message_read' is not a valid GroupEventType"""
-# Устанавливаем обработчик для игнорирования сообщений уровня ERROR
-class IgnoreErrors(logging.Filter):
-    def filter(self, record):
-        return record.levelno != logging.ERROR
-# Добавляем фильтр для игнорирования сообщений об ошибке
-logger.addFilter(IgnoreErrors())
-# Пример использования логгера
-logger.error("'message_read' is not a valid GroupEventType")  # Это сообщение будет игнорироваться
+# # Создаем логгер для модуля vkbottle
+# logger = logging.getLogger("vkbottle")
+# logger.setLevel(logging.CRITICAL)
+
+# # Создаем логгер для модуля mysql.connector
+# logging.getLogger("mysql.connector").setLevel(logging.CRITICAL)
+
+# # Создаем логгер для модуля urllib3
+# logging.getLogger("urllib3").setLevel(logging.CRITICAL)  # Игнорируем сообщения уровня DEBUG и INFO
+
+# """ЭТО ИГНОРИРУЕТ 'message_read' is not a valid GroupEventType"""
+# # Устанавливаем обработчик для игнорирования сообщений уровня ERROR
+# class IgnoreErrors(logging.Filter):
+#     def filter(self, record):
+#         return record.levelno != logging.ERROR
+# # Добавляем фильтр для игнорирования сообщений об ошибке
+# logger.addFilter(IgnoreErrors())
+# # Пример использования логгера
+# logger.error("'message_read' is not a valid GroupEventType")  # Это сообщение будет игнорироваться
+
+# # Устанавливаем обработчик для игнорирования сообщений уровня ERROR
+# class IgnoreErrors_1(logging.Filter):
+#     def filter(self, record):
+#         return record.levelno != logging.DEBUG
+# # Добавляем фильтр для игнорирования сообщений об ошибке
+# logger.addFilter(IgnoreErrors_1())
+# # Пример использования логгера
+# logger.error("vkbottle:logging is used as the default logger, but we recommend using loguru. It may also become a required dependency in future releases.")  # Это сообщение будет игнорироваться
 
 def process_1():
     ctx = CtxStorage()
@@ -3681,6 +3696,7 @@ def process_1():
             keyboard = await buttons.menu_menu()
             return await message.answer("Ошибка соединения с сервером", keyboard=keyboard)
 
+    print('The bot has started!')
     bot.run_forever()
 
 import requests
