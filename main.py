@@ -14,17 +14,9 @@ from base import *
 config = configparser.ConfigParser()
 config.read("config.ini")
 
-# Устанавливаем обработчик для игнорирования сообщений уровня ERROR
-class IgnoreErrors(logging.Filter):
-    def filter(self, record):
-        return record.levelno != logging.ERROR
-
 # Создаем логгер для модуля vkbottle
 logger = logging.getLogger("vkbottle")
 logger.setLevel(logging.INFO)
-
-# Добавляем фильтр для игнорирования сообщений об ошибке
-logger.addFilter(IgnoreErrors())
 
 # Создаем логгер для модуля mysql.connector
 mysql_logger = logging.getLogger("mysql.connector")
@@ -34,6 +26,13 @@ mysql_logger.setLevel(logging.INFO)
 urllib3_logger = logging.getLogger("urllib3")
 urllib3_logger.setLevel(logging.INFO)  # Игнорируем сообщения уровня DEBUG и INFO
 
+"""ЭТО ИГНОРИРУЕТ 'message_read' is not a valid GroupEventType"""
+# Устанавливаем обработчик для игнорирования сообщений уровня ERROR
+class IgnoreErrors(logging.Filter):
+    def filter(self, record):
+        return record.levelno != logging.ERROR
+# Добавляем фильтр для игнорирования сообщений об ошибке
+logger.addFilter(IgnoreErrors())
 # Пример использования логгера
 logger.error("'message_read' is not a valid GroupEventType")  # Это сообщение будет игнорироваться
 
@@ -372,7 +371,7 @@ def process_1():
                 await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                 # Очистка всех переменных
                 await reset_ctx(user_id)
-                return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
             try:
                 payload_data = eval(message.payload)['cmd']
@@ -392,7 +391,7 @@ def process_1():
                     await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                     # Очистка всех переменных
                     await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
                 elif ctx.get(f'{user_id}: number_department') != 'None' and ctx.get(f'{user_id}: number_grade') == 'None':
                     ctx.set(f"{user_id}: number_grade", payload_data)
@@ -478,10 +477,11 @@ def process_1():
                     ctx.set(f"{user_id}: {context}", "None")
 
                 await bot.state_dispenser.set(message.peer_id, SuperStates.FILIALS)
+                await message.answer("Заявка отправлена.")
                 await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                 # Очистка всех переменных
                 await reset_ctx(user_id)
-                return await message.answer("Заявка отправлена.\n\nПривет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
             user_id = message.from_id
             contexts = {"application_service": None, "contact_application": None, "fio_application": None}
@@ -522,14 +522,14 @@ def process_1():
                     await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                     # Очистка всех переменных
                     await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
                 elif payload_data == 'accept_entry':
                     await base(user_id = user_id).delete_vkontakte_reg(ctx.get(f'{user_id}: talon_select_vkontakte_reg'), ctx.get(f'{user_id}: department_select_vkontakte_reg'))
                     await bot.state_dispenser.set(message.peer_id, SuperStates.FILIALS)
                     await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                     # Очистка всех переменных
                     await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
                 elif payload_data == 'application_service_1' or payload_data == "application_service_2":
                     ctx.set(f'{user_id}: application_service', payload_data[-1])
                     if payload_data == 'application_service_1':
@@ -604,7 +604,7 @@ def process_1():
                     await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                     # Очистка всех переменных
                     await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
                 if payload_data == 'accept_entry':
                     await base(user_id = user_id).delete_vkontakte_reg(ctx.get(f'{user_id}: talon_select_vkontakte_reg'), ctx.get(f'{user_id}: department_select_vkontakte_reg'))
@@ -612,15 +612,16 @@ def process_1():
                     await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                     # Очистка всех переменных
                     await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
             except:
                 await base(user_id=user_id).base_anniversary(message.text)
                 await bot.state_dispenser.set(message.peer_id, SuperStates.FILIALS)
+                await message.answer("Ваше пожеление успешно отправлено. Хорошего дня!")
                 await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                 # Очистка всех переменных
                 await reset_ctx(user_id)
-                return await message.answer("Ваше пожеление успешно отправлено. Хорошего дня!\n\nПривет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
         except Exception as e:
             # Вывод подробной информации об ошибке
@@ -648,7 +649,7 @@ def process_1():
                     await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                     # Очистка всех переменных
                     await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
                 elif payload_data == 'accept_entry':
                     await base(user_id = user_id).delete_vkontakte_reg(ctx.get(f'{user_id}: talon_select_vkontakte_reg'), ctx.get(f'{user_id}: department_select_vkontakte_reg'))
@@ -656,7 +657,7 @@ def process_1():
                     await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                     # Очистка всех переменных
                     await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
             except:
                 pattern_number = r'\d{7}'
@@ -711,7 +712,7 @@ def process_1():
                 await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                 # Очистка всех переменных
                 await reset_ctx(user_id)
-                await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню', attachment=photo)
+                await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню', attachment=photo)
 
             else:
                 return await message.answer("Пожалуйста, убедитесь, что введённый вами номер телефона начинается с +7 или 8 и состоит из 11 цифр, без каких-либо знаков препинания. Возможно, вы ошиблись при вводе. Попробуйте ещё раз.")
@@ -792,7 +793,7 @@ def process_1():
                     await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                     # Очистка всех переменных
                     await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
                 answer = await base(user_id = user_id).phone_select()
 
@@ -814,7 +815,7 @@ def process_1():
                     await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                     # Очистка всех переменных
                     await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню', attachment=photo)
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню', attachment=photo)
                 else:
                     await bot.state_dispenser.set(message.peer_id, SuperStates.PHONE_INPUT)
                     return await message.answer("Для полноценного пользования чат-ботом необходимо пройти регистрацию. Пожалуйста, укажите ВАШ постоянный номер телефона, который будет связан с вашим аккаунтом.(например, 88003500850)")
@@ -868,7 +869,7 @@ def process_1():
                     await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                     # Очистка всех переменных
                     await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
             except:
                 pattern_telephone = r'^(8|\+7)[0-9]{10}$'
@@ -916,7 +917,7 @@ def process_1():
                     await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                     # Очистка всех переменных
                     await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
                 elif payload_data == 'accept_entry':
                     await base(user_id = user_id).delete_vkontakte_reg(ctx.get(f'{user_id}: talon_select_vkontakte_reg'), ctx.get(f'{user_id}: department_select_vkontakte_reg'))
@@ -924,7 +925,7 @@ def process_1():
                     await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                     # Очистка всех переменных
                     await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
             except:
                 pattern_telephone = r'^(8|\+7)[0-9]{10}$'
@@ -968,7 +969,7 @@ def process_1():
                     await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                     # Очистка всех переменных
                     await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
                 elif payload_data == 'accept_entry':
                     await base(user_id = user_id).delete_vkontakte_reg(ctx.get(f'{user_id}: talon_select_vkontakte_reg'), ctx.get(f'{user_id}: department_select_vkontakte_reg'))
@@ -976,7 +977,7 @@ def process_1():
                     await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                     # Очистка всех переменных
                     await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
                 elif payload_data == 'tomsk':
                     keyboard = await buttons.tomsk()
@@ -1680,11 +1681,12 @@ def process_1():
                     if payload_data == 'yes':
                         await base(user_id=user_id).events('tomsk', ctx.get(f'{user_id}: event_date'), 'VK')
                         await bot.state_dispenser.set(message.peer_id, SuperStates.FILIALS)
+                        await message.answer("Уведомление о событии вам придёт за день до его начала.")
                         await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                         ctx.set(f'{user_id}: event_location', 'None')
                         # Очистка всех переменных
                         await reset_ctx(user_id)
-                        return await message.answer("Уведомление о событии вам придёт за день до его начала.\n\nПривет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                        return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
                     elif payload_data == 'no':
                         keyboard = await buttons.events('tomsk')
                         return await message.answer("Выберите событие", keyboard=keyboard)
@@ -1714,7 +1716,7 @@ def process_1():
                     await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                     # Очистка всех переменных
                     await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
                 elif payload_data == 'accept_entry':
                     await base(user_id = user_id).delete_vkontakte_reg(ctx.get(f'{user_id}: talon_select_vkontakte_reg'), ctx.get(f'{user_id}: department_select_vkontakte_reg'))
@@ -1722,7 +1724,7 @@ def process_1():
                     await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                     # Очистка всех переменных
                     await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
                 elif payload_data == 'back_1':
                     keyboard = await buttons.filials('12345')
@@ -1777,7 +1779,7 @@ def process_1():
                     await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                     # Очистка всех переменных
                     await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
                 elif payload_data == 'accept_entry':
                     await base(user_id = user_id).delete_vkontakte_reg(ctx.get(f'{user_id}: talon_select_vkontakte_reg'), ctx.get(f'{user_id}: department_select_vkontakte_reg'))
@@ -1785,7 +1787,7 @@ def process_1():
                     await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                     # Очистка всех переменных
                     await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
                 elif payload_data == 'cons_mvd':
 
@@ -2105,7 +2107,7 @@ def process_1():
                     await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                     # Очистка всех переменных
                     await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
                 elif payload_data == 'accept_entry':
                     await base(user_id = user_id).delete_vkontakte_reg(ctx.get(f'{user_id}: talon_select_vkontakte_reg'), ctx.get(f'{user_id}: department_select_vkontakte_reg'))
@@ -2113,7 +2115,7 @@ def process_1():
                     await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                     # Очистка всех переменных
                     await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
                 elif ctx.get(f'{user_id}: yes_no_cache') == 'yes' and payload_data == 'yes':
                     ctx.set(f'{user_id}: yes_no_cache', 'None')
@@ -2138,7 +2140,7 @@ def process_1():
                         await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                         # Очистка всех переменных
                         await reset_ctx(user_id)
-                        return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                        return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
                     ctx.set(f'{user_id}: tel_cache', 'None')
                     if res:
@@ -2166,7 +2168,7 @@ def process_1():
                             await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                             # Очистка всех переменных
                             await reset_ctx(user_id)
-                            return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                            return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
                         keyboard = await buttons.yes_no()
                         return await message.answer(f"Ваш талон {code_cache} успешно удалён.\n\nХотите ли удалить талон {code[index]}", keyboard=keyboard)
@@ -2188,7 +2190,7 @@ def process_1():
                         await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                         # Очистка всех переменных
                         await reset_ctx(user_id)
-                        return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                        return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
                     keyboard = await buttons.yes_no()
                     return await message.answer(f"Хотите ли удалить талон {code[counter]}", keyboard=keyboard)
@@ -2306,14 +2308,14 @@ def process_1():
                 await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                 # Очистка всех переменных
                 await reset_ctx(user_id)
-                return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
             elif payload_data == 'accept_entry':
                 await base(user_id = user_id).delete_vkontakte_reg(ctx.get(f'{user_id}: talon_select_vkontakte_reg'), ctx.get(f'{user_id}: department_select_vkontakte_reg'))
                 await bot.state_dispenser.set(message.peer_id, SuperStates.FILIALS)
                 await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                 # Очистка всех переменных
                 await reset_ctx(user_id)
-                return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
             commands_6 = {
                 'tomsk_obl_1': buttons.tomsk_obl_1,
@@ -2386,7 +2388,7 @@ def process_1():
                 await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                 # Очистка всех переменных
                 await reset_ctx(user_id)
-                return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
             elif payload_data == 'anniversary':
                 ctx.set(f'{user_id}: anniversary', 'yes')
@@ -2563,10 +2565,11 @@ def process_1():
                 keyboard = await buttons.yes_no()
                 return await message.answer(f"Вы точно хотите удалить талон {payload_data.split('_')[3]}?", keyboard=keyboard)
             else:
+                await message.answer("Вы ввели некорректные данные.")
                 await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                 # Очистка всех переменных
                 await reset_ctx(user_id)
-                return await message.answer("Вы ввели некорректные данные.\n\nПривет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
         except Exception as e:
             # Вывод подробной информации об ошибке
             print(f"Поймано исключение: {type(e).__name__}")
@@ -2609,7 +2612,7 @@ def process_1():
                 await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                 # Очистка всех переменных
                 await reset_ctx(user_id)
-                return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
             elif payload_data == 'accept_entry':
                 await base(user_id = user_id).delete_vkontakte_reg(ctx.get(f'{user_id}: talon_select_vkontakte_reg'), ctx.get(f'{user_id}: department_select_vkontakte_reg'))
@@ -2617,7 +2620,7 @@ def process_1():
                 await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                 # Очистка всех переменных
                 await reset_ctx(user_id)
-                return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
             elif payload_data == 'mfc_business':
                 await bot.state_dispenser.set(message.peer_id, SuperStates.DEPARTMENT)
@@ -2729,7 +2732,7 @@ def process_1():
                 await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                 # Очистка всех переменных
                 await reset_ctx(user_id)
-                return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
             elif payload_data == 'accept_entry':
                 await base(user_id = user_id).delete_vkontakte_reg(ctx.get(f'{user_id}: talon_select_vkontakte_reg'), ctx.get(f'{user_id}: department_select_vkontakte_reg'))
@@ -2737,7 +2740,7 @@ def process_1():
                 await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                 # Очистка всех переменных
                 await reset_ctx(user_id)
-                return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
             commands_3 = {
                 'soc_sphere': buttons.services_social,
@@ -2818,7 +2821,7 @@ def process_1():
                     await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                     # Очистка всех переменных
                     await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
                 elif payload_data == 'accept_entry':
                     await base(user_id = user_id).delete_vkontakte_reg(ctx.get(f'{user_id}: talon_select_vkontakte_reg'), ctx.get(f'{user_id}: department_select_vkontakte_reg'))
@@ -2826,7 +2829,7 @@ def process_1():
                     await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                     # Очистка всех переменных
                     await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
             except:
 
@@ -2861,6 +2864,11 @@ def process_1():
                     ctx.set(f'{user_id}: fields', fields)
 
                     await bot.state_dispenser.set(message.peer_id, SuperStates.DATE)
+                    print('--------------------------------------------')
+                    print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1 НА СТРОЧКЕ 2873')
+                    print(*SSR)
+                    print(ctx.get(f'{user_id}: fields'))
+                    print('--------------------------------------------')
                     keyboard = await buttons.date_1(*SSR, ctx.get(f'{user_id}: fields'))
                     keyboard_data = json.loads(keyboard)
                     payload_value = keyboard_data['buttons'][0][0]['action']['payload']
@@ -2964,6 +2972,11 @@ def process_1():
                     ctx.set(f'{user_id}: fields', fields)
 
                     await bot.state_dispenser.set(message.peer_id, SuperStates.DATE)
+                    print('--------------------------------------------')
+                    print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1 НА СТРОЧКЕ 2981')
+                    print(*SSR)
+                    print(ctx.get(f'{user_id}: fields'))
+                    print('--------------------------------------------')
                     keyboard = await buttons.date_1(*SSR, ctx.get(f'{user_id}: fields'))
                     keyboard_data = json.loads(keyboard)
                     payload_value = keyboard_data['buttons'][0][0]['action']['payload']
@@ -2972,6 +2985,14 @@ def process_1():
                         return await message.answer("На эту услугу нет свободных дат", keyboard=keyboard)
                     else:
                         return await message.answer("Выберите свободную дату", keyboard=keyboard)
+
+                #     """--------------------------------------------------------"""
+
+                # elif service_id == '8f5e514e-dcce-41cf-8b56-38db6af10056' and field_5 == 'yes':
+                #     keyboard = await buttons.yes_no()
+                #     await message.answer("Уточните, необходимо ли составить договор купли-продажи или дарения?", keyboard=keyboard)
+
+                #     """--------------------------------------------------------"""
 
                 elif service_id == '81914e42-5ce6-477a-a49c-52299d37f8ca' and field_5 == 'None':
                     ctx.set(f'{user_id}: field_5', payload_data)
@@ -2996,6 +3017,11 @@ def process_1():
                     ctx.set(f'{user_id}: fields', fields)
 
                     await bot.state_dispenser.set(message.peer_id, SuperStates.DATE)
+                    print('--------------------------------------------')
+                    print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1 НА СТРОЧКЕ 3026')
+                    print(*SSR)
+                    print(ctx.get(f'{user_id}: fields'))
+                    print('--------------------------------------------')
                     keyboard = await buttons.date_1(*SSR, ctx.get(f'{user_id}: fields'))
                     keyboard_data = json.loads(keyboard)
                     payload_value = keyboard_data['buttons'][0][0]['action']['payload']
@@ -3027,6 +3053,11 @@ def process_1():
                     ctx.set(f'{user_id}: fields', fields)
 
                     await bot.state_dispenser.set(message.peer_id, SuperStates.DATE)
+                    print('--------------------------------------------')
+                    print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1 НА СТРОЧКЕ 3062')
+                    print(*SSR)
+                    print(ctx.get(f'{user_id}: fields'))
+                    print('--------------------------------------------')
                     keyboard = await buttons.date_1(*SSR, ctx.get(f'{user_id}: fields'))
                     keyboard_data = json.loads(keyboard)
                     payload_value = keyboard_data['buttons'][0][0]['action']['payload']
@@ -3057,6 +3088,11 @@ def process_1():
                     ctx.set(f'{user_id}: fields', fields)
 
                     await bot.state_dispenser.set(message.peer_id, SuperStates.DATE)
+                    print('--------------------------------------------')
+                    print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1 НА СТРОЧКЕ 3097')
+                    print(*SSR)
+                    print(ctx.get(f'{user_id}: fields'))
+                    print('--------------------------------------------')
                     keyboard = await buttons.date_1(*SSR, ctx.get(f'{user_id}: fields'))
                     keyboard_data = json.loads(keyboard)
                     payload_value = keyboard_data['buttons'][0][0]['action']['payload']
@@ -3083,7 +3119,11 @@ def process_1():
 
                     ctx.set(f'{user_id}: fields', fields)
                     await bot.state_dispenser.set(message.peer_id, SuperStates.DATE)
-
+                    print('--------------------------------------------')
+                    print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1 НА СТРОЧКЕ 3028')
+                    print(*SSR)
+                    print(ctx.get(f'{user_id}: fields'))
+                    print('--------------------------------------------')
                     keyboard = await buttons.date_1(*SSR, ctx.get(f'{user_id}: fields'))
                     keyboard_data = json.loads(keyboard)
                     payload_value = keyboard_data['buttons'][0][0]['action']['payload']
@@ -3119,7 +3159,10 @@ def process_1():
                     ctx.get(f'{user_id}: department'),
                     ctx.get(f'{user_id}: service'),
                     ctx.get(f'{user_id}: fields'))
-
+                print('--------------------------------------------')
+                print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_2 НА СТРОЧКЕ 3167')
+                print(*SSR)
+                print('--------------------------------------------')
                 keyboard = await buttons.date_2(*SSR)
                 return await message.answer("Выберите свободную дату", keyboard=keyboard)
 
@@ -3144,7 +3187,7 @@ def process_1():
                 await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                 # Очистка всех переменных
                 await reset_ctx(user_id)
-                return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
             elif payload_data == 'accept_entry':
                 await base(user_id = user_id).delete_vkontakte_reg(ctx.get(f'{user_id}: talon_select_vkontakte_reg'), ctx.get(f'{user_id}: department_select_vkontakte_reg'))
@@ -3152,7 +3195,7 @@ def process_1():
                 await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                 # Очистка всех переменных
                 await reset_ctx(user_id)
-                return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
             ctx.set(f'{user_id}: date', payload_data)
 
@@ -3201,6 +3244,7 @@ def process_1():
                     return await message.answer("На эту услугу нет свободного времени", keyboard=keyboard)
                 else:
                     return await message.answer("Выберите свободную дату", keyboard=keyboard)
+
             elif payload_data == 'menu':
 
                 await notification_delete_coupon(user_id, message)
@@ -3209,7 +3253,7 @@ def process_1():
                 await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                 # Очистка всех переменных
                 await reset_ctx(user_id)
-                return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
             elif payload_data == 'accept_entry':
                 await base(user_id = user_id).delete_vkontakte_reg(ctx.get(f'{user_id}: talon_select_vkontakte_reg'), ctx.get(f'{user_id}: department_select_vkontakte_reg'))
@@ -3217,12 +3261,18 @@ def process_1():
                 await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                 # Очистка всех переменных
                 await reset_ctx(user_id)
-                return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
             elif payload_data == 'back_1':
                 ctx.set(f'{user_id}: date', 'None')
                 ctx.set(f'{user_id}: time', 'None')
                 await bot.state_dispenser.set(message.peer_id, SuperStates.DATE)
+                print('--------------------------------------------')
+                print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1 НА СТРОЧКЕ 3074')
+                print(ctx.get(f'{user_id}: date'))
+                print(ctx.get(f'{user_id}: time'))
+                print(*SSR)
+                print('--------------------------------------------')
                 keyboard = await buttons.date_1(ctx.get(f'{user_id}: date'), ctx.get(f'{user_id}: time'), *SSR)
                 return await message.answer("Выберите свободную дату", keyboard=keyboard)
             elif payload_data == 'yes':
@@ -3233,36 +3283,36 @@ def process_1():
                 await bot.state_dispenser.set(message.peer_id, SuperStates.PHONE_INPUT_NEW)
                 return await message.answer("Введите ваш номер телефона (например, 88003500850)")
 
-            commands_5 = {
-                'time_ost_2': buttons.time_2,
-                'time_ost_3': buttons.time_3,
-                'time_ost_4': buttons.time_4,
-                'time_ost_5': buttons.time_5,
-                'time_ost_6': buttons.time_6,
-                'time_ost_7': buttons.time_7,
-                'time_ost_8': buttons.time_8,
-                'time_ost_9': buttons.time_9,
-                'time_ost_10': buttons.time_10,
-                'time_ost_11': buttons.time_11,
-                'time_ost_12': buttons.time_12
-            }
+            # commands_5 = {
+            #     'time_ost_2': buttons.time_2,
+            #     'time_ost_3': buttons.time_3,
+            #     'time_ost_4': buttons.time_4,
+            #     'time_ost_5': buttons.time_5,
+            #     'time_ost_6': buttons.time_6,
+            #     'time_ost_7': buttons.time_7,
+            #     'time_ost_8': buttons.time_8,
+            #     'time_ost_9': buttons.time_9,
+            #     'time_ost_10': buttons.time_10,
+            #     'time_ost_11': buttons.time_11,
+            #     'time_ost_12': buttons.time_12
+            # }
 
-            # Пример вызова функции по ключу
-            if payload_data in commands_5:
-                function_to_call = commands_5[payload_data]
-                keyboard = await function_to_call(ctx.get(f'{user_id}: times'))
-                keyboard_data = json.loads(keyboard)
-                payload_value = keyboard_data['buttons'][0][0]['action']['payload']
-                payload = eval(str(payload_value))['cmd']
-                if payload == 'menu' or payload == 'back':
-                    return await message.answer("На этот промежуток нет свободного времени", keyboard=keyboard)
-                else:
-                    payload_value = keyboard_data['buttons'][0][0]['action']['payload']
-                    payload = eval(str(payload_value))['cmd']
-                    if payload in commands_5:
-                        return await message.answer("В этом диапазоне время занято. Нажмите кнопку 'Остальное время'", keyboard=keyboard)
-                    else:
-                        return await message.answer("Выберите свободное время", keyboard=keyboard)
+            # # Пример вызова функции по ключу
+            # if payload_data in commands_5:
+            #     function_to_call = commands_5[payload_data]
+            #     keyboard = await function_to_call(ctx.get(f'{user_id}: times'))
+            #     keyboard_data = json.loads(keyboard)
+            #     payload_value = keyboard_data['buttons'][0][0]['action']['payload']
+            #     payload = eval(str(payload_value))['cmd']
+            #     if payload == 'menu' or payload == 'back':
+            #         return await message.answer("На этот промежуток нет свободного времени", keyboard=keyboard)
+            #     else:
+            #         payload_value = keyboard_data['buttons'][0][0]['action']['payload']
+            #         payload = eval(str(payload_value))['cmd']
+            #         if payload in commands_5:
+            #             return await message.answer("В этом диапазоне время занято. Нажмите кнопку 'Остальное время'", keyboard=keyboard)
+            #         else:
+            #             return await message.answer("Выберите свободное время", keyboard=keyboard)
 
             if not payload_data in times_list:
                 ctx.set(f'{user_id}: time', payload_data)
@@ -3282,21 +3332,25 @@ def process_1():
                 '1900': buttons.time_12
             }
 
-            lists_1 = {'time_ost_2', 'time_ost_3', 'time_ost_4', 'time_ost_5',
-                    'time_ost_6', 'time_ost_7', 'time_ost_8', 'time_ost_9', 'time_ost_10',
-                    'time_ost_11', 'time_ost_12'}
+            # lists_1 = {'time_ost_2', 'time_ost_3', 'time_ost_4', 'time_ost_5',
+            #         'time_ost_6', 'time_ost_7', 'time_ost_8', 'time_ost_9', 'time_ost_10',
+            #         'time_ost_11', 'time_ost_12'}
 
             # Пример вызова функции по ключу
             if payload_data in commands_4:
                 function_to_call = commands_4[payload_data]
+                print('--------------------------------------------')
+                print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ time НА СТРОЧКЕ 3348')
+                print(ctx.get(f'{user_id}: times'))
+                print('--------------------------------------------')
                 keyboard = await function_to_call(ctx.get(f'{user_id}: times'))
                 keyboard_data = json.loads(keyboard)
                 payload_value = keyboard_data['buttons'][0][0]['action']['payload']
                 payload = eval(str(payload_value))['cmd']
                 if payload == 'menu':
                     return await message.answer("На эту услугу нет свободного времени", keyboard=keyboard)
-                elif payload in lists_1:
-                    return await message.answer("На этот промежуток нет свободного времени", keyboard=keyboard)
+                # elif payload in lists_1:
+                #     return await message.answer("На этот промежуток нет свободного времени", keyboard=keyboard)
             else:
                 keyboard = await buttons.yes_no()
                 return await message.answer(f"Обращаем Ваше внимание, что прием осуществляется только при соответствии информации, указанной в талоне, с данными заявителя.\n\nДля записи на приём использовать номер телефона {ctx.get(f'{user_id}: phone')}?", keyboard=keyboard)
@@ -3317,7 +3371,62 @@ def process_1():
     @bot.on.message(state=SuperStates.PHONE)
     async def handler_fio(message: Message):
         try:
+
             user_id = message.from_id
+
+            async def post_file(file_name):
+                import os
+
+                # Путь к директории, куда сохранять файлы
+                DOWNLOAD_PATH = "C:\\Users\\neverov\\Desktop\\file"
+
+                # Создадим директорию, если она не существует
+                if not os.path.exists(DOWNLOAD_PATH):
+                    os.makedirs(DOWNLOAD_PATH)
+
+                # Проверяем, есть ли вложения и является ли первое вложение документом
+                if message.attachments and len(message.attachments) > 0 and message.attachments[0].doc:
+                    document = message.attachments[0].doc
+
+                    # Получаем расширение файла
+                    file_extension = document.ext
+
+                    # Проверка, что файл не имеет расширение .rar
+                    if file_extension.lower() == 'rar':
+                        return False, 'Файлы с расширением .rar не поддерживаются'
+
+                    # Получаем URL для загрузки документа
+                    file_url = document.url
+
+                    # import random
+
+                    # random_int = random.randint(1, 10000)
+
+                    # Имя файла (например, example.pdf)
+                    # file_name = document.title
+                    # file_name_format = str(document.title).split('.')[1]
+                    # file_name = f'{str(random_int)}_{str(user_id)}.{file_name_format}'
+
+                    # Полный путь, куда сохранять файл
+                    file_path = os.path.join(DOWNLOAD_PATH, file_name)
+
+                    # count = 0
+                    # while os.path.isfile(file_path) and count != 5:
+                    #     random_int = random.randint(1, 10000)
+                    #     file_name = f'{str(random_int)}_{str(user_id)}.{file_name_format}'
+                    #     count += 1
+
+                    # Загружаем файл с сервера ВКонтакте и сохраняем его
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get(file_url) as resp:
+                            if resp.status == 200:
+                                with open(file_path, 'wb') as f:
+                                    f.write(await resp.read())
+
+                    return True, f"Файл '{file_name}' сохранён."
+                else:
+                    # Если вложений нет или они не являются документами
+                    return False, 'В вашем сообщении нет документа.'
 
             users_info = await bot.api.users.get(message.from_id)
             first_name = users_info[0].first_name
@@ -3345,7 +3454,7 @@ def process_1():
                     await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                     # Очистка всех переменных
                     await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
                 elif payload_data == 'accept_entry':
                     await base(user_id = user_id).delete_vkontakte_reg(ctx.get(f'{user_id}: talon_select_vkontakte_reg'), ctx.get(f'{user_id}: department_select_vkontakte_reg'))
@@ -3353,12 +3462,76 @@ def process_1():
                     await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                     # Очистка всех переменных
                     await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
                 elif payload_data == 'yes_fi' and user_text is None:
                     user_text = f"{last_name} {first_name}"
+
+                elif payload_data == 'yes':
+                    ctx.set(f'{user_id}: button_cache_file', 'yes')
+                    keyboard = await buttons.menu_menu_file()
+                    return await message.answer("Загрузите непустые страницы вашего паспорта.", keyboard=keyboard)
+
+                elif payload_data == 'no':
+                    await bot.state_dispenser.set(message.peer_id, SuperStates.FILIALS)
+                    await message.answer("Ваши документы отправлены. В день приёма специалисты подготовят договор по предоставленным вами документам")
+                    await buttons.menu(user_id, config["VKONTAKTE"]["token"])
+                    # Очистка всех переменных
+                    await reset_ctx(user_id)
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
+
             except:
                 user_text = message.text
+
+            async def write_to_file(text):
+                import os
+                # Указываем директорию для сохранения файла
+                folder_path = 'C:\\Users\\neverov\\Desktop\\file'  # Укажите путь к папке
+                os.makedirs(folder_path, exist_ok=True)  # Создает папку, если она не существует
+
+                file_path = os.path.join(folder_path, f'info_{user_id}.txt')  # Путь к файлу
+
+                # Асинхронно записываем текст в файл
+                async with aiofiles.open(file_path, 'w', encoding='utf-8') as file:
+                    await file.write(text)
+
+            if ctx.get(f'{user_id}: button_cache_file') == 'yes':
+                document = message.attachments[0].doc
+                file_name_format = str(document.title).split('.')[1]
+                file_name = f'passport_{user_id}.{file_name_format}'
+                post = await post_file(file_name)
+                if post[0]:
+                    # Отправляем сообщение о том, что файл сохранён
+                    await message.answer(post[1])
+                    ctx.set(f'{user_id}: button_cache_file_1', 'yes')
+                    ctx.set(f'{user_id}: button_cache_file', '')
+                    keyboard = await buttons.menu_menu_file()
+                    return await message.answer("Загрузите все страницы выписки из ЕГРН.", keyboard=keyboard)
+                else:
+                    keyboard = await buttons.menu_menu_file()
+                    return await message.answer(post[1], keyboard=keyboard)
+            elif ctx.get(f'{user_id}: button_cache_file_1') == 'yes':
+                document = message.attachments[0].doc
+                file_name_format = str(document.title).split('.')[1]
+                file_name = f'egrn_{user_id}.{file_name_format}'
+                post = await post_file(file_name)
+                if post[0]:
+
+                    await write_to_file(ctx.get(f'{user_id}: answer_record'))
+
+                    # Отправляем сообщение о том, что файл сохранён
+                    await message.answer(post[1])
+                    await message.answer("Спапсибо за обращение.")
+                    ctx.set(f'{user_id}: button_cache_file_1', '')
+
+                    await bot.state_dispenser.set(message.peer_id, SuperStates.FILIALS)
+                    await buttons.menu(user_id, config["VKONTAKTE"]["token"])
+                    # Очистка всех переменных
+                    await reset_ctx(user_id)
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
+                else:
+                    keyboard = await buttons.menu_menu_file()
+                    return await message.answer(post[1], keyboard=keyboard)
 
             count_space = 0
             for char in message.text :
@@ -3381,19 +3554,34 @@ def process_1():
 
             res = await base(user_id=user_id, tel = ctx.get(f'{user_id}: phone')).base_record(ctx.get(f'{user_id}: fio'), ctx.get(f'{user_id}: department'), ctx.get(f'{user_id}: service'), ctx.get(f'{user_id}: time'), ctx.get(f'{user_id}: date'), ctx.get(f'{user_id}: fields'))
             if res['code'] == 'ok':
-                await message.answer("Вы записаны. Ваш номер талона: " + str(res['number']) + ', дата визита: ' + str(res['dateTime'] + ', время визита: ' + str(res['visitTime']) + ', место визита: ' + str(res["department"])))
+                answer_1 = f"{ctx.get(f'{user_id}: fio')}, {ctx.get(f'{user_id}: phone')}, Номер талона: " + str(res['number']) + ', дата визита: ' + str(res['dateTime'] + ', время визита: ' + str(res['visitTime']) + ', место визита: ' + str(res["department"]))
+                ctx.set(f'{user_id}: answer_record', answer_1)
+                answer_2 = "Вы записаны. Ваш номер талона: " + str(res['number']) + ', дата визита: ' + str(res['dateTime'] + ', время визита: ' + str(res['visitTime']) + ', место визита: ' + str(res["department"]))
+                await message.answer(answer_2)
+
+                """ОТПРАВЛЯТЬ ФАЙЛЫ"""
+
+                # if ctx.get(f'{user_id}: service') == '8f5e514e-dcce-41cf-8b56-38db6af10056' and ctx.get(f'{user_id}: field_5') == 'yes':
+                #     keyboard = await buttons.yes_no_doc()
+                #     return await message.answer("Мы заботимся о вашем времени! Для вашего удобства предлагаем возможность отправки необходимых документов онлайн, что позволит сохранить время, затрачиваемое на приёме.", keyboard=keyboard)
+
                 await bot.state_dispenser.set(message.peer_id, SuperStates.FILIALS)
                 await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                 # Очистка всех переменных
                 await reset_ctx(user_id)
-                return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
             elif res['code'] == 'err_no_slots':
 
                 ctx.set(f'{user_id}: date', 'None')
                 ctx.set(f'{user_id}: time', 'None')
 
                 await bot.state_dispenser.set(message.peer_id, SuperStates.DATE)
-
+                print('--------------------------------------------')
+                print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1 НА СТРОЧКЕ 3577')
+                print(ctx.get(f'{user_id}: date'))
+                print(ctx.get(f'{user_id}: time'))
+                print(*SSR)
+                print('--------------------------------------------')
                 keyboard = await buttons.date_1(ctx.get(f'{user_id}: date'), ctx.get(f'{user_id}: time'), *SSR)
                 keyboard_data = json.loads(keyboard)
                 payload_value = keyboard_data['buttons'][0][0]['action']['payload']
@@ -3449,7 +3637,7 @@ def process_1():
                     await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                     # Очистка всех переменных
                     await reset_ctx(user_id)
-                    return await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню')
+                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
             except:
                 pass
 
@@ -3479,7 +3667,7 @@ def process_1():
                 await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                 # Очистка всех переменных
                 await reset_ctx(user_id)
-                await message.answer("Привет, {}".format(users_info[0].first_name) + ', Вы в главном меню', attachment=photo)
+                await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню', attachment=photo)
             else:
                 await bot.state_dispenser.set(message.peer_id, SuperStates.PHONE_INPUT)
                 return await message.answer("Для полноценного пользования чат-ботом необходимо пройти регистрацию. Пожалуйста, укажите ВАШ постоянный номер телефона, который будет связан с вашим аккаунтом.(например, 88003500850)")
@@ -3908,6 +4096,10 @@ def process_7():
     import mail
     mail.process_mail()
 
+def process_8():
+    import mail
+    mail.process_file()
+
 if __name__ == "__main__":
 
     process1 = Process(target=process_1)
@@ -3918,6 +4110,7 @@ if __name__ == "__main__":
     # process5 = Process(target=process_5)
     # process6 = Process(target=process_6)
     # process7 = Process(target=process_7)
+    # process8 = Process(target=process_8)
 
     # process1.start()
     # process2.start()
@@ -3926,6 +4119,7 @@ if __name__ == "__main__":
     # process5.start()
     # process6.start()
     # process7.start()
+    # process8.start()
 
     # process1.join()
     # process2.join()
@@ -3934,6 +4128,7 @@ if __name__ == "__main__":
     # process5.join()
     # process6.join()
     # process7.join()
+    # process8.join()
 
     while True:
         if not process1.is_alive():
@@ -3963,4 +4158,8 @@ if __name__ == "__main__":
         # elif not process7.is_alive():
         #     process7 = Process(target=process_7)
         #     process7.start()
+        #     # process7.join()
+        # elif not process8.is_alive():
+        #     process8 = Process(target=process_8)
+        #     process8.start()
         #     # process7.join()

@@ -209,9 +209,13 @@ class buttons:
         counter = 0
         conditions = [True] * 12
 
-        print(times)
+        if isinstance(times, tuple) and not times[1].get('success', True):
+            # Обработка ошибки сервера
+            print(f"Ошибка: {times[1].get('message', 'Неизвестная ошибка')}")
 
-        if times[1]["data"] == []:
+        print('ВЫВОД ВРЕМЕН В ФУНКЦИИ times_buttons', times[1]["data"])
+
+        if not times[1]["data"]:
             keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
             keyboard = keyboard.get_json()
             return keyboard
@@ -557,6 +561,16 @@ class buttons:
         keyboard = keyboard.get_json()
         return keyboard
 
+    async def yes_no_doc(*args):
+        keyboard = Keyboard(one_time=True, inline=False)
+        keyboard.add(Text("Ознакомиться с перечнем документов", {"cmd": "yes"}), color=KeyboardButtonColor.POSITIVE)
+        keyboard.add(Text("Не интересно", {"cmd": "no"}), color=KeyboardButtonColor.POSITIVE)
+        keyboard.row()
+        keyboard.add(Text("Назад", {"cmd": "back"}), color=KeyboardButtonColor.NEGATIVE)
+        keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
+        keyboard = keyboard.get_json()
+        return keyboard
+
     async def agreement_yes_no(*args):
         keyboard = Keyboard(one_time=True, inline=False)
         keyboard.add(Text("Согласен", {"cmd": "yes"}), color=KeyboardButtonColor.POSITIVE)
@@ -616,16 +630,16 @@ class buttons:
         keyboard = {
             "one_time": True,
             "buttons": [
-                [
-                    {
-                        "action": {
-                            "type": "text",
-                            "label": "*ЮБИЛЕЙ ТОМСКОЙ ОБЛАСТИ*",
-                            "payload": "{\"cmd\": \"anniversary\"}"
-                        },
-                        "color": "negative"
-                    }
-                ],
+                # [
+                #     {
+                #         "action": {
+                #             "type": "text",
+                #             "label": "*ЮБИЛЕЙ ТОМСКОЙ ОБЛАСТИ*",
+                #             "payload": "{\"cmd\": \"anniversary\"}"
+                #         },
+                #         "color": "negative"
+                #     }
+                # ],
                 [
                     {
                         "action": {
@@ -726,7 +740,7 @@ class buttons:
 
         # Данные для отправки сообщения
         peer_id = (args,)[0][0] # ID пользователя, которому отправляем сообщение
-        message = 'ㅤ'
+        message = 'Добро пожаловать!'
 
         # Функция для генерации "случайных" чисел без использования модуля random
         def custom_random():
@@ -941,6 +955,12 @@ class buttons:
         keyboard = keyboard.get_json()
         return keyboard
 
+    async def menu_menu_file(*args):
+        keyboard = Keyboard(one_time=True, inline=False)
+        keyboard.add(Text("Отказаться", {"cmd": "menu"}), color=KeyboardButtonColor.NEGATIVE)
+        keyboard = keyboard.get_json()
+        return keyboard
+
     async def grade(*args):
         keyboard = Keyboard(one_time=True, inline=False)
         keyboard.add(Text("Отправить без комментария", {"cmd": "1"}), color=KeyboardButtonColor.POSITIVE)
@@ -1013,9 +1033,13 @@ class buttons:
         dates = await base().base_get_date_and_time(date, time, department, service, fields_s, True)
         keyboard = Keyboard(one_time=True, inline=False)
 
-        print('DATES_1:', dates)
+        if isinstance(dates, tuple) and not dates[0].get('success', True):
+            # Обработка ошибки сервера
+            print(f"Ошибка: {dates[0].get('message', 'Неизвестная ошибка')}")
 
-        if dates[0]["data"] == []:
+        print('ПОСЛЕ ВХОДА В ФУНКЦИЮ date_1:', dates)
+
+        if not dates[0]["data"]:
             keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
             keyboard = keyboard.get_json()
             return keyboard
@@ -1050,15 +1074,20 @@ class buttons:
         keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
 
         keyboard = keyboard.get_json()
+        print('ПОЛУЧИВШАЯСЯ КЛАВИАТУРА В ФУНКЦИИ date_1', keyboard)
         return keyboard
 
     async def date_2(date, time, department, service, fields_s):
         dates = await base().base_get_date_and_time(date, time, department, service, fields_s, False)
         keyboard = Keyboard(one_time=True, inline=False)
 
-        print('DATES_2:', dates)
+        if isinstance(dates, tuple) and not dates[0].get('success', True):
+            # Обработка ошибки сервера
+            print(f"Ошибка: {dates[0].get('message', 'Неизвестная ошибка')}")
 
-        if dates[0]["data"] == []:
+        print('ПОСЛЕ ВХОДА В ФУНКЦИЮ date_2:', dates)
+
+        if not dates[0]["data"]:
             keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
             keyboard = keyboard.get_json()
             return keyboard
@@ -1091,223 +1120,252 @@ class buttons:
         keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
 
         keyboard = keyboard.get_json()
+        print('ПОЛУЧИВШАЯСЯ КЛАВИАТУРА В ФУНКЦИИ date_2', keyboard)
+        return keyboard
+
+    # async def time_1(times_s):
+    #     times = times_s
+    #     keyboard = Keyboard(one_time=True, inline=False)
+
+    #     print('TIMES_1:', times)
+
+    #     if times[1]["data"] == []:
+    #         keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
+    #         keyboard = keyboard.get_json()
+    #         return keyboard
+
+    #     row = False
+
+    #     counter = 0
+    #     for i in times[1]["data"]:
+    #         t = str(i).split(":")
+    #         st = t[0] + t[1]
+    #         if int(st) < 900:
+    #             keyboard.add(Text(str(i), {"cmd": str(i)}), color=KeyboardButtonColor.POSITIVE)
+    #             counter += 1
+
+    #             row = False
+
+    #             if counter % 2 == 0:
+    #                 keyboard.row()
+    #                 row = True
+
+    #             if counter == 5:
+    #                 if not row:
+    #                     keyboard.row()
+    #                 keyboard.add(Text("Остальное время", {"cmd": "time_ost_2"}), color=KeyboardButtonColor.POSITIVE)
+    #                 keyboard.row()
+    #                 keyboard.add(Text("Назад", {"cmd": "back"}), color=KeyboardButtonColor.NEGATIVE)
+    #                 break
+
+    #     # Преобразуем клавиатуру в JSON
+    #     keyboard_json = keyboard.get_json()
+
+    #     # Парсим JSON
+    #     keyboard_data = json.loads(keyboard_json)
+
+    #     # Проверка наличия кнопок и непустой последней строки
+    #     buttons = keyboard_data['buttons']
+    #     has_buttons = any(bool(row) for row in buttons)  # Проверка наличия хотя бы одной строки с кнопками
+    #     last_row = buttons[-1] if buttons else None  # Получаем последнюю строку
+
+    #     if counter < 5:
+    #         if has_buttons and any(bool(button) for button in last_row) and not row:
+    #             keyboard.row()
+    #         keyboard.add(Text("Остальное время", {"cmd": "time_ost_2"}), color=KeyboardButtonColor.POSITIVE)
+    #         keyboard.row()
+    #         keyboard.add(Text("Назад", {"cmd": "back"}), color=KeyboardButtonColor.NEGATIVE)
+    #     keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
+
+    #     keyboard = keyboard.get_json()
+    #     return keyboard
+
+    async def times(times_s, a, b):
+
+        keyboard = Keyboard(one_time=True, inline=False)
+
+        if isinstance(times_s, tuple) and not times_s[1].get('success', True):
+            # Обработка ошибки сервера
+            print(f"Ошибка: {times_s[1].get('message', 'Неизвестная ошибка')}")
+
+        print('ПОСЛЕ ВХОДА В ФУНКЦИЮ times:', times_s[1]["data"])
+
+        if not times_s[1]["data"]:
+            keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
+            keyboard = keyboard.get_json()
+            return keyboard
+
+        row = False
+        counter = 0
+
+        for i in times_s[1]["data"]:
+            t = str(i).split(":")
+            st = t[0] + t[1]
+            if a < int(st) < b:
+                keyboard.add(Text(str(i), {"cmd": str(i)}), color=KeyboardButtonColor.POSITIVE)
+                counter += 1
+                row = False
+
+                if counter % 2 == 0:
+                    keyboard.row()
+                    row = True
+
+                if counter == 6:
+                    if not row:
+                        keyboard.row()
+                    # if not button == '':
+                    #     keyboard.add(Text("Остальное время", {"cmd": button}), color=KeyboardButtonColor.POSITIVE)
+                    # keyboard.row()
+                    keyboard.add(Text("Назад", {"cmd": "back"}), color=KeyboardButtonColor.NEGATIVE)
+                    break
+
+        # Преобразуем клавиатуру в JSON
+        keyboard_json = keyboard.get_json()
+
+        # Парсим JSON
+        keyboard_data = json.loads(keyboard_json)
+
+        # Проверка наличия кнопок и непустой последней строки
+        buttons = keyboard_data['buttons']
+        has_buttons = any(bool(row) for row in buttons)  # Проверка наличия хотя бы одной строки с кнопками
+        last_row = buttons[-1] if buttons else None  # Получаем последнюю строку
+
+        if counter < 6:
+            if has_buttons and any(bool(button) for button in last_row) and not row:
+                keyboard.row()
+            # if not button == '':
+            #     keyboard.add(Text("Остальное время", {"cmd": button}), color=KeyboardButtonColor.POSITIVE)
+            # keyboard.row()
+            keyboard.add(Text("Назад", {"cmd": "back"}), color=KeyboardButtonColor.NEGATIVE)
+        keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
+
+        keyboard = keyboard.get_json()
+        print('ПОЛУЧИВШАЯСЯ КЛАВИАТУРА В ФУНКЦИИ times', keyboard)
         return keyboard
 
     async def time_1(times_s):
-        times = times_s
-        keyboard = Keyboard(one_time=True, inline=False)
-
-        print('TIMES_1:', times)
-
-        if times[1]["data"] == []:
-            keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
-            keyboard = keyboard.get_json()
-            return keyboard
-
-        row = False
-
-        counter = 0
-        for i in times[1]["data"]:
-            t = str(i).split(":")
-            st = t[0] + t[1]
-            if int(st) < 900:
-                keyboard.add(Text(str(i), {"cmd": str(i)}), color=KeyboardButtonColor.POSITIVE)
-                counter += 1
-
-                row = False
-
-                if counter % 2 == 0:
-                    keyboard.row()
-                    row = True
-
-                if counter == 5:
-                    if not row:
-                        keyboard.row()
-                    keyboard.add(Text("Остальное время", {"cmd": "time_ost_2"}), color=KeyboardButtonColor.POSITIVE)
-                    keyboard.row()
-                    keyboard.add(Text("Назад", {"cmd": "back"}), color=KeyboardButtonColor.NEGATIVE)
-                    break
-
-        # Преобразуем клавиатуру в JSON
-        keyboard_json = keyboard.get_json()
-
-        # Парсим JSON
-        keyboard_data = json.loads(keyboard_json)
-
-        # Проверка наличия кнопок и непустой последней строки
-        buttons = keyboard_data['buttons']
-        has_buttons = any(bool(row) for row in buttons)  # Проверка наличия хотя бы одной строки с кнопками
-        last_row = buttons[-1] if buttons else None  # Получаем последнюю строку
-
-        if counter < 5:
-            if has_buttons and any(bool(button) for button in last_row) and not row:
-                keyboard.row()
-            keyboard.add(Text("Остальное время", {"cmd": "time_ost_2"}), color=KeyboardButtonColor.POSITIVE)
-            keyboard.row()
-            keyboard.add(Text("Назад", {"cmd": "back"}), color=KeyboardButtonColor.NEGATIVE)
-        keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
-
-        keyboard = keyboard.get_json()
-        return keyboard
-
-    async def times(times_s, a, b, button):
-        times = times_s
-        keyboard = Keyboard(one_time=True, inline=False)
-
-        print('TIMES_2:', times)
-
-        if times[1]["data"] == []:
-            keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
-            keyboard = keyboard.get_json()
-            return keyboard
-
-        row = False
-
-        counter = 0
-        for i in times[1]["data"]:
-            t = str(i).split(":")
-            st = t[0] + t[1]
-            if int(st) > a and int(st) < b:
-                keyboard.add(Text(str(i), {"cmd": str(i)}), color=KeyboardButtonColor.POSITIVE)
-                counter += 1
-
-                row = False
-
-                if counter % 2 == 0:
-                    keyboard.row()
-                    row = True
-
-                if counter == 5:
-                    if not row:
-                        keyboard.row()
-                    keyboard.add(Text("Остальное время", {"cmd": button}), color=KeyboardButtonColor.POSITIVE)
-                    keyboard.row()
-                    keyboard.add(Text("Назад", {"cmd": "back"}), color=KeyboardButtonColor.NEGATIVE)
-                    break
-
-        # Преобразуем клавиатуру в JSON
-        keyboard_json = keyboard.get_json()
-
-        # Парсим JSON
-        keyboard_data = json.loads(keyboard_json)
-
-        # Проверка наличия кнопок и непустой последней строки
-        buttons = keyboard_data['buttons']
-        has_buttons = any(bool(row) for row in buttons)  # Проверка наличия хотя бы одной строки с кнопками
-        last_row = buttons[-1] if buttons else None  # Получаем последнюю строку
-
-        if counter < 5:
-            if has_buttons and any(bool(button) for button in last_row) and not row:
-                keyboard.row()
-            keyboard.add(Text("Остальное время", {"cmd": button}), color=KeyboardButtonColor.POSITIVE)
-            keyboard.row()
-            keyboard.add(Text("Назад", {"cmd": "back"}), color=KeyboardButtonColor.NEGATIVE)
-        keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
-
-        keyboard = keyboard.get_json()
-
-        return keyboard
+        a = 750
+        b = 900
+        # button = 'time_ost_2'
+        # return await buttons.times(times_s, a, b, button)
+        return await buttons.times(times_s, a, b)
 
     async def time_2(times_s):
         a = 850
         b = 1000
-        button = 'time_ost_3'
-        return await buttons.times(times_s, a, b, button)
+        # button = 'time_ost_3'
+        # return await buttons.times(times_s, a, b, button)
+        return await buttons.times(times_s, a, b)
 
     async def time_3(times_s):
         a = 950
         b = 1100
-        button = 'time_ost_4'
-        return await buttons.times(times_s, a, b, button)
+        # button = 'time_ost_4'
+        # return await buttons.times(times_s, a, b, button)
+        return await buttons.times(times_s, a, b)
 
     async def time_4(times_s):
         a = 1050
         b = 1200
-        button = 'time_ost_5'
-        return await buttons.times(times_s, a, b, button)
+        # button = 'time_ost_5'
+        # return await buttons.times(times_s, a, b, button)
+        return await buttons.times(times_s, a, b)
 
     async def time_5(times_s):
         a = 1150
         b = 1300
-        button = 'time_ost_6'
-        return await buttons.times(times_s, a, b, button)
+        # button = 'time_ost_6'
+        # return await buttons.times(times_s, a, b, button)
+        return await buttons.times(times_s, a, b)
 
     async def time_6(times_s):
         a = 1250
         b = 1400
-        button = 'time_ost_7'
-        return await buttons.times(times_s, a, b, button)
+        # button = 'time_ost_7'
+        # return await buttons.times(times_s, a, b, button)
+        return await buttons.times(times_s, a, b)
 
     async def time_7(times_s):
         a = 1350
         b = 1500
-        button = 'time_ost_8'
-        return await buttons.times(times_s, a, b, button)
+        # button = 'time_ost_8'
+        # return await buttons.times(times_s, a, b, button)
+        return await buttons.times(times_s, a, b)
 
     async def time_8(times_s):
         a = 1450
         b = 1600
-        button = 'time_ost_9'
-        return await buttons.times(times_s, a, b, button)
+        # button = 'time_ost_9'
+        # return await buttons.times(times_s, a, b, button)
+        return await buttons.times(times_s, a, b)
 
     async def time_9(times_s):
         a = 1550
         b = 1700
-        button = 'time_ost_10'
-        return await buttons.times(times_s, a, b, button)
+        # button = 'time_ost_10'
+        # return await buttons.times(times_s, a, b, button)
+        return await buttons.times(times_s, a, b)
 
     async def time_10(times_s):
         a = 1650
         b = 1800
-        button = 'time_ost_11'
-        return await buttons.times(times_s, a, b, button)
+        # button = 'time_ost_11'
+        # return await buttons.times(times_s, a, b, button)
+        return await buttons.times(times_s, a, b)
 
     async def time_11(times_s):
         a = 1750
         b = 1900
-        button = 'time_ost_12'
-        return await buttons.times(times_s, a, b, button)
+        # button = 'time_ost_12'
+        # return await buttons.times(times_s, a, b, button)
+        return await buttons.times(times_s, a, b)
 
     async def time_12(times_s):
-        times = times_s
-        keyboard = Keyboard(one_time=True, inline=False)
+        a = 1850
+        b = 2000
+        # button = ''
+        # return await buttons.times(times_s, a, b, button)
+        return await buttons.times(times_s, a, b)
 
-        print('TIMES_3:', times)
+        # times = times_s
+        # keyboard = Keyboard(one_time=True, inline=False)
 
-        if times[1]["data"] == []:
-            keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
-            keyboard = keyboard.get_json()
-            return keyboard
+        # print('TIMES_3:', times)
 
-        row = False
+        # if times[1]["data"] == []:
+        #     keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
+        #     keyboard = keyboard.get_json()
+        #     return keyboard
 
-        counter = 0
-        for i in times[1]["data"]:
-            t = str(i).split(":")
-            st = t[0] + t[1]
-            if int(st) > 1850 and int(st) <= 2000:
-                keyboard.add(Text(str(i), {"cmd": str(i)}), color=KeyboardButtonColor.POSITIVE)
-                counter += 1
-                row = False
-                if counter % 2 == 0:
-                    keyboard.row()
-                    row = True
+        # row = False
 
-        # Преобразуем клавиатуру в JSON
-        keyboard_json = keyboard.get_json()
+        # counter = 0
+        # for i in times[1]["data"]:
+        #     t = str(i).split(":")
+        #     st = t[0] + t[1]
+        #     if int(st) > 1850 and int(st) <= 2000:
+        #         keyboard.add(Text(str(i), {"cmd": str(i)}), color=KeyboardButtonColor.POSITIVE)
+        #         counter += 1
+        #         row = False
+        #         if counter % 2 == 0:
+        #             keyboard.row()
+        #             row = True
 
-        # Парсим JSON
-        keyboard_data = json.loads(keyboard_json)
+        # # Преобразуем клавиатуру в JSON
+        # keyboard_json = keyboard.get_json()
 
-        # Проверка наличия кнопок и непустой последней строки
-        buttons = keyboard_data['buttons']
-        has_buttons = any(bool(row) for row in buttons)  # Проверка наличия хотя бы одной строки с кнопками
-        last_row = buttons[-1] if buttons else None  # Получаем последнюю строку
+        # # Парсим JSON
+        # keyboard_data = json.loads(keyboard_json)
 
-        if has_buttons and any(bool(button) for button in last_row) and not row:
-            keyboard.row()
-        keyboard.add(Text("Назад", {"cmd": "back"}), color=KeyboardButtonColor.NEGATIVE)
-        keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
+        # # Проверка наличия кнопок и непустой последней строки
+        # buttons = keyboard_data['buttons']
+        # has_buttons = any(bool(row) for row in buttons)  # Проверка наличия хотя бы одной строки с кнопками
+        # last_row = buttons[-1] if buttons else None  # Получаем последнюю строку
 
-        keyboard = keyboard.get_json()
-        return keyboard
+        # if has_buttons and any(bool(button) for button in last_row) and not row:
+        #     keyboard.row()
+        # keyboard.add(Text("Назад", {"cmd": "back"}), color=KeyboardButtonColor.NEGATIVE)
+        # keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
+
+        # keyboard = keyboard.get_json()
+        # return keyboard
