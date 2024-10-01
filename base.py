@@ -756,8 +756,14 @@ class base:
                     "debug": "Ответ от АИС МФЦ: " + str(xstatus)
                 }
         except Exception as e:
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
+
             # К сожалению не удалось выяснить статус документов по вашему номеру
-            print("BASE_readiness_status:", e)
             result = {
                 "status_eng": "",
                 "status_rus": "",
@@ -861,32 +867,14 @@ class base:
             for i in range(len(result)):
                 dates.append(result[i][0])
 
+            return dates
         except Exception as e:
-            print('BASE_base_get_events_dates:', e)
-        return dates
-
-    # async def base_get_events_event(self, location, date):
-
-    #     try:
-    #         pool = await aiomysql.create_pool(
-    #             host="172.18.11.103",
-    #             user="root",
-    #             password="enigma1418",
-    #             db="mdtomskbot",
-    #             connect_timeout=2
-    #         )
-    #         async with pool.acquire() as conn:
-    #             async with conn.cursor() as cursor:
-
-    #                 sql_check = f"SELECT event FROM calendar WHERE location = '{location}' AND date = '{date}'"
-    #                 await cursor.execute(sql_check)
-    #                 result = await cursor.fetchall()
-
-    #         event = result[0][0]
-
-    #     except Exception as e:
-    #         print('BASE:', e)
-    #     return event
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
 
     async def base_get_date_and_time(self, date, time, department, service, fields_s, condition):
         try:
@@ -1061,62 +1049,67 @@ class base:
                 times = await fetch_time_async(date, time, department, service, fields_s)
             else:
                 times = None
+            return dates, times
         except Exception as e:
-            print('BASE_base_get_date_and_time:', e)
-
-        return dates, times
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
 
     async def base_record(self, fio, filial, usluga, time, date, fields_all):
 
-        fields = json.loads(fields_all)["fields"]
-        fields = json.dumps(fields)
-        casecount = json.loads(fields_all)["casecount"]
-        # Удаление символов '{' и '}'
-        fields = fields.replace("'", '"')
-        fields = json.loads(fields)
+        try:
+            fields = json.loads(fields_all)["fields"]
+            fields = json.dumps(fields)
+            casecount = json.loads(fields_all)["casecount"]
+            # Удаление символов '{' и '}'
+            fields = fields.replace("'", '"')
+            fields = json.loads(fields)
 
-        prms = {
-            "mfcId": int(filial),
-            "serviceId": usluga,
-            "caseCount": int(casecount),
-            "start": date + "T" + time,
-            "source": "ADMINISTRATOR_BOOKING" if filial == "342595" else "VOICE",
-            "customer": {
-                "name": fio,
-                "phone": self.tel
-            },
-            "fields": fields
-        }
-
-        async def get_key_by_value(dictionary, value):
-            for key, val in dictionary.items():
-                if val == value:
-                    return key
-            return None
-
-        server = "https://equeue.mfc.tomsk.ru"
-        async with aiohttp.ClientSession() as session:
-            async with session.post(server + "/rest/book", json=prms, timeout=10) as response:
-                response_res = await response.json()
-
-        if response_res.get("success", False) == True:
-            res = {
-                "code": "ok",
-                "number": response_res["data"]["prefix"] + '-' + str(response_res["data"]["number"]),
-                "fio": fio,
-                "phone": self.tel,
-                "visitTime": time,
-                "dateTime": date,
-                'department': await get_key_by_value(filials, filial)
+            prms = {
+                "mfcId": int(filial),
+                "serviceId": usluga,
+                "caseCount": int(casecount),
+                "start": date + "T" + time,
+                "source": "ADMINISTRATOR_BOOKING" if filial == "342595" else "VOICE",
+                "customer": {
+                    "name": fio,
+                    "phone": self.tel
+                },
+                "fields": fields
             }
 
-            date_ = str(datetime.datetime.now().date())
-            time_ = str(datetime.datetime.now().time())[:-7]
-            time_obj = datetime.datetime.strptime(time_, "%H:%M:%S")
-            new_time_obj = time_obj + datetime.timedelta(hours=7)
-            time_ = new_time_obj.strftime("%H:%M:%S")
+            async def get_key_by_value(dictionary, value):
+                for key, val in dictionary.items():
+                    if val == value:
+                        return key
+                return None
 
-            try:
+            server = "https://equeue.mfc.tomsk.ru"
+            async with aiohttp.ClientSession() as session:
+                async with session.post(server + "/rest/book", json=prms, timeout=10) as response:
+                    response_res = await response.json()
+
+            if response_res.get("success", False) == True:
+                res = {
+                    "code": "ok",
+                    "number": response_res["data"]["prefix"] + '-' + str(response_res["data"]["number"]),
+                    "fio": fio,
+                    "phone": self.tel,
+                    "visitTime": time,
+                    "dateTime": date,
+                    'department': await get_key_by_value(filials, filial)
+                }
+
+                date_ = str(datetime.datetime.now().date())
+                time_ = str(datetime.datetime.now().time())[:-7]
+                time_obj = datetime.datetime.strptime(time_, "%H:%M:%S")
+                new_time_obj = time_obj + datetime.timedelta(hours=7)
+                time_ = new_time_obj.strftime("%H:%M:%S")
+
+
                 pool = await aiomysql.create_pool(
                     host="172.18.11.103",
                     user="root",
@@ -1158,14 +1151,19 @@ class base:
 
                         await conn.commit()
 
-            except Exception as e:
-                print('BASE_base_record:', e)
-        else:
-            res = {
-                "code": "err_no_slots",
-                "err_msg": str(response_res)
-            }
-        return res
+            else:
+                res = {
+                    "code": "err_no_slots",
+                    "err_msg": str(response_res)
+                }
+            return res
+        except Exception as e:
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
 
     async def phone_select(self):
         try:
@@ -1194,9 +1192,14 @@ class base:
                         # значениe ani не существует
                         answer = False
 
+            return answer, result, result_1
         except Exception as e:
-            print('BASE_phone_select:', e)
-        return answer, result, result_1
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
 
     async def agreement_select(self):
 
@@ -1225,9 +1228,15 @@ class base:
                             answer = False
                     except:
                         answer = False
+
+            return answer, str(result[0][0]) if answer else '0'
         except Exception as e:
-            print('BASE_agreement_select:', e)
-        return answer, str(result[0][0]) if answer else '0'
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
 
     async def phone_input(self):
         try:
@@ -1267,9 +1276,14 @@ class base:
                     except:
                         pass
 
+            return res
         except Exception as e:
-            print('BASE_phone_input:', e)
-        return res
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
 
     async def agreement_input(self, *args):
 
@@ -1304,73 +1318,14 @@ class base:
                             insert_query = "INSERT INTO agreement (id_vk, vk, tel) VALUES (%s, %s, %s)"
                             await cursor.execute(insert_query, (self.user_id, args[0], self.tel))
 
+            return
         except Exception as e:
-            print('BASE_agreement_input:', e)
-        return
-
-    # async def phone_input_new(self):
-    #     import datetime
-    #     date = datetime.datetime.now().date()
-    #     # time = str(datetime.datetime.now().time())[:-7]
-    #     # time_obj = datetime.datetime.strptime(time, "%H:%M:%S")
-    #     # new_time_obj = time_obj + datetime.timedelta(hours=7)
-    #     # time = new_time_obj.strftime("%H:%M:%S")
-    #     try:
-    #         pool = await aiomysql.create_pool(
-    #             host="172.18.11.103",
-    #             user="root",
-    #             password="enigma1418",
-    #             db="mdtomskbot",
-    #             autocommit=True,
-    #             connect_timeout=2
-    #         )
-    #         async with pool.acquire() as conn:
-    #             async with conn.cursor() as cursor:
-
-    #                 await cursor.execute(
-    #                     f"SELECT date FROM notification WHERE id_vk = '{self.user_id}'"
-    #                 )
-    #                 result_date = await cursor.fetchall()
-
-    #                 await cursor.execute(
-    #                     f"SELECT ani FROM notification WHERE id_vk = '{self.user_id}'"
-    #                 )
-    #                 result_phone = await cursor.fetchall()
-
-    #                 await cursor.execute(
-    #                     f"SELECT new_ani FROM notification WHERE id_vk = '{self.user_id}'"
-    #                 )
-    #                 result_phone_new = await cursor.fetchall()
-
-    #                 if result_date[0][0] == None or result_date[0][0] == '':
-
-    #                     await cursor.execute(
-    #                         f"UPDATE notification SET new_ani = '{self.tel}' WHERE ani = '{int(result_phone[0][0])}' "
-    #                     )
-    #                     await cursor.execute(
-    #                         f"UPDATE notification SET date = '{date}' WHERE ani = '{int(result_phone[0][0])}' "
-    #                     )
-
-    #                     result = True
-    #                 else:
-    #                     from datetime import datetime
-    #                     result_date = datetime.strptime(result_date[0][0], "%Y-%m-%d").date()
-    #                     if result_date != date:
-    #                         await cursor.execute(
-    #                             f"UPDATE notification SET new_ani = '{self.tel}' WHERE ani = '{int(result_phone[0][0])}' "
-    #                         )
-    #                         await cursor.execute(
-    #                             f"UPDATE notification SET date = '{date}' WHERE ani = '{int(result_phone[0][0])}' "
-    #                         )
-    #                         result = True
-    #                     elif result_phone[0][0] == self.tel or result_phone_new[0][0] == self.tel:
-    #                         result = True
-    #                     else:
-    #                         result = False
-
-    #     except Exception as e:
-    #         print('BASE_phone_input_new:', e)
-    #     return result
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
 
     async def update_notification(self, cursor, phone, date):
         # Обновляем запись в notification новым номером телефона и датой
@@ -1422,17 +1377,23 @@ class base:
                     return False
 
         except Exception as e:
-            print('BASE_phone_input_new:', e)
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
             return False
 
     async def base_count_record(self):
 
-        date = str(datetime.datetime.now().date())
-        time = str(datetime.datetime.now().time())[:-7]
-        time_obj = datetime.datetime.strptime(time, "%H:%M:%S")
-        new_time_obj = time_obj + datetime.timedelta(hours=7)
-        time = new_time_obj.strftime("%H:%M:%S")
         try:
+            date = str(datetime.datetime.now().date())
+            time = str(datetime.datetime.now().time())[:-7]
+            time_obj = datetime.datetime.strptime(time, "%H:%M:%S")
+            new_time_obj = time_obj + datetime.timedelta(hours=7)
+            time = new_time_obj.strftime("%H:%M:%S")
+
             pool = await aiomysql.create_pool(
                 host="172.18.11.103",
                 user="root",
@@ -1449,18 +1410,24 @@ class base:
                         f"VALUES ('{self.user_id}', '{date}', '{time}', 'record');"
                     )
 
+            return
         except Exception as e:
-            print('BASE_base_count_record', e)
-        return
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
 
     async def base_count_application(self):
 
-        date = str(datetime.datetime.now().date())
-        time = str(datetime.datetime.now().time())[:-7]
-        time_obj = datetime.datetime.strptime(time, "%H:%M:%S")
-        new_time_obj = time_obj + datetime.timedelta(hours=7)
-        time = new_time_obj.strftime("%H:%M:%S")
         try:
+            date = str(datetime.datetime.now().date())
+            time = str(datetime.datetime.now().time())[:-7]
+            time_obj = datetime.datetime.strptime(time, "%H:%M:%S")
+            new_time_obj = time_obj + datetime.timedelta(hours=7)
+            time = new_time_obj.strftime("%H:%M:%S")
+
             pool = await aiomysql.create_pool(
                 host="172.18.11.103",
                 user="root",
@@ -1477,18 +1444,24 @@ class base:
                         f"VALUES ('{self.user_id}', '{date}', '{time}', 'application');"
                     )
 
+            return
         except Exception as e:
-            print('BASE_base_count_application', e)
-        return
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
 
     async def base_count_grade(self):
 
-        date = str(datetime.datetime.now().date())
-        time = str(datetime.datetime.now().time())[:-7]
-        time_obj = datetime.datetime.strptime(time, "%H:%M:%S")
-        new_time_obj = time_obj + datetime.timedelta(hours=7)
-        time = new_time_obj.strftime("%H:%M:%S")
         try:
+            date = str(datetime.datetime.now().date())
+            time = str(datetime.datetime.now().time())[:-7]
+            time_obj = datetime.datetime.strptime(time, "%H:%M:%S")
+            new_time_obj = time_obj + datetime.timedelta(hours=7)
+            time = new_time_obj.strftime("%H:%M:%S")
+
             pool = await aiomysql.create_pool(
                 host="172.18.11.103",
                 user="root",
@@ -1505,9 +1478,14 @@ class base:
                         f"VALUES ('{self.user_id}', '{date}', '{time}', 'grade');"
                     )
 
+            return
         except Exception as e:
-            print('BASE_base_count_grade', e)
-        return
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
 
     async def base_review(*args):
 
@@ -1524,19 +1502,24 @@ class base:
                 async with conn.cursor() as cursor:
 
                     await cursor.execute(
-                        f"INSERT INTO ratings_reviews (number_statement, number_date, number_department, number_grade, number_waiting_time, number_time, number_employee, number_review) "
-                        f"VALUES ('{(args,)[0][1]}', '{(args,)[0][2]}', '{(args,)[0][3]}', '{(args,)[0][4]}', '{(args,)[0][5]}', '{(args,)[0][6]}', '{(args,)[0][7]}', '{(args,)[0][8]}');"
+                        f"INSERT INTO ratings_reviews (number_statement, number_date, number_department, number_grade, number_waiting_time, number_time, number_employee, number_review, date_now) "
+                        f"VALUES ('{(args,)[0][1]}', '{(args,)[0][2]}', '{(args,)[0][3]}', '{(args,)[0][4]}', '{(args,)[0][5]}', '{(args,)[0][6]}', '{(args,)[0][7]}', '{(args,)[0][8]}', '{(args,)[0][9]}');"
                     )
 
+            return
         except Exception as e:
-            print('BASE_base_review', e)
-        return
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
 
     async def base_post_application(*args):
 
-        date = str(datetime.datetime.now().date())
-
         try:
+            date = str(datetime.datetime.now().date())
+
             pool = await aiomysql.create_pool(
                 host="172.18.11.103",
                 user="root",
@@ -1553,18 +1536,24 @@ class base:
                         "VALUES (%s, %s, %s, %s, %s, %s)",
                         ((args,)[0][0], (args,)[0][1], (args,)[0][2], (args,)[0][3], date, (args,)[0][4])
                     )
+            return
         except Exception as e:
-            print('BASE_base_post_application', e)
-        return
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
 
     async def base_count_status(self):
 
-        date = str(datetime.datetime.now().date())
-        time = str(datetime.datetime.now().time())[:-7]
-        time_obj = datetime.datetime.strptime(time, "%H:%M:%S")
-        new_time_obj = time_obj + datetime.timedelta(hours=7)
-        time = new_time_obj.strftime("%H:%M:%S")
         try:
+            date = str(datetime.datetime.now().date())
+            time = str(datetime.datetime.now().time())[:-7]
+            time_obj = datetime.datetime.strptime(time, "%H:%M:%S")
+            new_time_obj = time_obj + datetime.timedelta(hours=7)
+            time = new_time_obj.strftime("%H:%M:%S")
+
             pool = await aiomysql.create_pool(
                 host="172.18.11.103",
                 user="root",
@@ -1581,18 +1570,24 @@ class base:
                         f"VALUES ('{self.user_id}', '{date}', '{time}', 'status');"
                     )
 
+            return
         except Exception as e:
-            print('BASE_base_count_status:', e)
-        return
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
 
     async def base_count_inf(self):
 
-        date = str(datetime.datetime.now().date())
-        time = str(datetime.datetime.now().time())[:-7]
-        time_obj = datetime.datetime.strptime(time, "%H:%M:%S")
-        new_time_obj = time_obj + datetime.timedelta(hours=7)
-        time = new_time_obj.strftime("%H:%M:%S")
         try:
+            date = str(datetime.datetime.now().date())
+            time = str(datetime.datetime.now().time())[:-7]
+            time_obj = datetime.datetime.strptime(time, "%H:%M:%S")
+            new_time_obj = time_obj + datetime.timedelta(hours=7)
+            time = new_time_obj.strftime("%H:%M:%S")
+
             pool = await aiomysql.create_pool(
                 host="172.18.11.103",
                 user="root",
@@ -1609,18 +1604,24 @@ class base:
                         f"VALUES ('{self.user_id}', '{date}', '{time}', 'inf');"
                     )
 
+            return
         except Exception as e:
-            print('BASE_base_count_inf:', e)
-        return
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
 
     async def base_count_events(self):
 
-        date = str(datetime.datetime.now().date())
-        time = str(datetime.datetime.now().time())[:-7]
-        time_obj = datetime.datetime.strptime(time, "%H:%M:%S")
-        new_time_obj = time_obj + datetime.timedelta(hours=7)
-        time = new_time_obj.strftime("%H:%M:%S")
         try:
+            date = str(datetime.datetime.now().date())
+            time = str(datetime.datetime.now().time())[:-7]
+            time_obj = datetime.datetime.strptime(time, "%H:%M:%S")
+            new_time_obj = time_obj + datetime.timedelta(hours=7)
+            time = new_time_obj.strftime("%H:%M:%S")
+
             pool = await aiomysql.create_pool(
                 host="172.18.11.103",
                 user="root",
@@ -1637,18 +1638,24 @@ class base:
                         f"VALUES ('{self.user_id}', '{date}', '{time}', 'event');"
                     )
 
+            return
         except Exception as e:
-            print('BASE_base_count_events:', e)
-        return
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
 
     async def base_count_cons_mfc(self):
 
-        date = str(datetime.datetime.now().date())
-        time = str(datetime.datetime.now().time())[:-7]
-        time_obj = datetime.datetime.strptime(time, "%H:%M:%S")
-        new_time_obj = time_obj + datetime.timedelta(hours=7)
-        time = new_time_obj.strftime("%H:%M:%S")
         try:
+            date = str(datetime.datetime.now().date())
+            time = str(datetime.datetime.now().time())[:-7]
+            time_obj = datetime.datetime.strptime(time, "%H:%M:%S")
+            new_time_obj = time_obj + datetime.timedelta(hours=7)
+            time = new_time_obj.strftime("%H:%M:%S")
+
             pool = await aiomysql.create_pool(
                 host="172.18.11.103",
                 user="root",
@@ -1665,18 +1672,24 @@ class base:
                         f"VALUES ('{self.user_id}', '{date}', '{time}', 'cons');"
                     )
 
+            return
         except Exception as e:
-            print('BASE_base_count_cons_mfc:', e)
-        return
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
 
     async def base_count_cancel_record(self):
 
-        date = str(datetime.datetime.now().date())
-        time = str(datetime.datetime.now().time())[:-7]
-        time_obj = datetime.datetime.strptime(time, "%H:%M:%S")
-        new_time_obj = time_obj + datetime.timedelta(hours=7)
-        time = new_time_obj.strftime("%H:%M:%S")
         try:
+            date = str(datetime.datetime.now().date())
+            time = str(datetime.datetime.now().time())[:-7]
+            time_obj = datetime.datetime.strptime(time, "%H:%M:%S")
+            new_time_obj = time_obj + datetime.timedelta(hours=7)
+            time = new_time_obj.strftime("%H:%M:%S")
+
             pool = await aiomysql.create_pool(
                 host="172.18.11.103",
                 user="root",
@@ -1693,18 +1706,24 @@ class base:
                         f"VALUES ('{self.user_id}', '{date}', '{time}', 'cancel_record');"
                     )
 
+            return
         except Exception as e:
-            print('BASE_base_count_cancel_record:', e)
-        return
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
 
     async def base_count_anniversary(self):
 
-        date = str(datetime.datetime.now().date())
-        time = str(datetime.datetime.now().time())[:-7]
-        time_obj = datetime.datetime.strptime(time, "%H:%M:%S")
-        new_time_obj = time_obj + datetime.timedelta(hours=7)
-        time = new_time_obj.strftime("%H:%M:%S")
         try:
+            date = str(datetime.datetime.now().date())
+            time = str(datetime.datetime.now().time())[:-7]
+            time_obj = datetime.datetime.strptime(time, "%H:%M:%S")
+            new_time_obj = time_obj + datetime.timedelta(hours=7)
+            time = new_time_obj.strftime("%H:%M:%S")
+
             pool = await aiomysql.create_pool(
                 host="172.18.11.103",
                 user="root",
@@ -1720,18 +1739,20 @@ class base:
                         f"INSERT INTO count_vk (id, date, time, button) VALUES ('{self.user_id}', '{date}', '{time}', 'anniversary');"
                     )
 
+            return
         except Exception as e:
-            print('BASE_base_count_anniversary:', e)
-        return
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
 
     async def base_anniversary(self, text):
 
-        date = str(datetime.datetime.now().date())
-        # time = str(datetime.datetime.now().time())[:-7]
-        # time_obj = datetime.datetime.strptime(time, "%H:%M:%S")
-        # new_time_obj = time_obj + datetime.timedelta(hours=7)
-        # time = new_time_obj.strftime("%H:%M:%S")
         try:
+            date = str(datetime.datetime.now().date())
+
             pool = await aiomysql.create_pool(
                 host="172.18.11.103",
                 user="root",
@@ -1745,9 +1766,14 @@ class base:
 
                     await cursor.execute(f"INSERT INTO anniversary (text, date, sender) VALUES ('{text}', '{date}', '{self.user_id}');")
 
+            return
         except Exception as e:
-            print('BASE_base_anniversary:', e)
-        return
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
 
     async def events(self, event, date, platform):
 
@@ -1782,37 +1808,42 @@ class base:
                         (self.user_id, event, date, platform)
                     )
 
+            return
         except Exception as e:
-            print('BASE_events:', e)
-        return
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
 
     async def information_about_coupons(*args):
 
-        import requests
-
-        server = "https://equeue.mfc.tomsk.ru"
-
-        SERVICES = [
-            'Паспорт, прописка, ИНН, СНИЛС, ОМС',
-            'Субсидии, льготы, компенсации, пенсии',
-            'Предоставление сведений из ЕГРН',
-            'Прекращение, приостановка, приобщение документов по ранее принятому делу (недвижимость)',
-            'Справки УМВД и Пенсионного фонда (справки о несудимости, выписки ИЛС, справки о размере пенсии и другие)',
-            'Получение разрешений органов опеки г. Томск',
-            'Портал Госуслуги.ру'
-        ]
-
-        REPLACEMENT_SERVICES = [
-            'по оформлению личных документов гражданина',
-            'по оформлению Субсидии, льготы, компенсации, пенсии',
-            'по предоставлению сведений из ЕГРН',
-            'Приобщение, приостановка, прекращение',
-            'Справки УМВД, Пенсионного фонда и налоговой',
-            'Получение разрешений органов опеки города Томска',
-            'По регистрации на портале Госуслуг или в личном кабинете налогоплательщика'
-        ]
-
         try:
+            import requests
+
+            server = "https://equeue.mfc.tomsk.ru"
+
+            SERVICES = [
+                'Паспорт, прописка, ИНН, СНИЛС, ОМС',
+                'Субсидии, льготы, компенсации, пенсии',
+                'Предоставление сведений из ЕГРН',
+                'Прекращение, приостановка, приобщение документов по ранее принятому делу (недвижимость)',
+                'Справки УМВД и Пенсионного фонда (справки о несудимости, выписки ИЛС, справки о размере пенсии и другие)',
+                'Получение разрешений органов опеки г. Томск',
+                'Портал Госуслуги.ру'
+            ]
+
+            REPLACEMENT_SERVICES = [
+                'по оформлению личных документов гражданина',
+                'по оформлению Субсидии, льготы, компенсации, пенсии',
+                'по предоставлению сведений из ЕГРН',
+                'Приобщение, приостановка, прекращение',
+                'Справки УМВД, Пенсионного фонда и налоговой',
+                'Получение разрешений органов опеки города Томска',
+                'По регистрации на портале Госуслуг или в личном кабинете налогоплательщика'
+            ]
+
             phone_dummy = (args,)[0][0]
             phone_dummy = phone_dummy.replace(' ', '')
 
@@ -1840,13 +1871,13 @@ class base:
                 esiaid = ''
                 code = ''
                 for i in range(len(talons['data'])):
-                    location_name += talons['data'][i]['location']['name'] + ',  '
-                    location_address += talons['data'][i]['location']['address'] + ',  '
-                    service_name += talons['data'][i]['service']['name'] + ',  '
-                    time += talons['data'][i]['time'] + ', '
-                    talon_id += talons['data'][i]['id'] + ', '
-                    esiaid += talons['data'][i]['customer'].get('esiaId', '') + ', '
-                    code += talons['data'][i]['code'] + ', '
+                    location_name += str(talons['data'][i]['location']['name']) + ',  '
+                    location_address += str(talons['data'][i]['location']['address']) + ',  '
+                    service_name += str(talons['data'][i]['service']['name']) + ',  '
+                    time += str(talons['data'][i]['time']) + ', '
+                    talon_id += str(talons['data'][i]['id']) + ', '
+                    esiaid += str(talons['data'][i]['customer'].get('esiaId', '')) + ', '
+                    code += str(talons['data'][i]['code']) + ', '
 
                 # Массив
                 location_name = location_name.rsplit(',  ')[:-1]
@@ -1902,7 +1933,12 @@ class base:
                     "code": 'no'
                 }
         except Exception as e:
-            print('BASE_information_about_coupons', e)
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
 
             res = {
                 "code": "error"
@@ -1981,12 +2017,21 @@ class base:
                             )
 
                 except Exception as e:
-                    print('BASE_deep_delete_coupons:', e)
+                    # Вывод подробной информации об ошибке
+                    print(f"Поймано исключение: {type(e).__name__}")
+                    print(f"Сообщение об ошибке: {str(e)}")
+                    import traceback
+                    print("Трассировка стека (stack trace):")
+                    traceback.print_exc()
 
+            return res
         except Exception as e:
-            print('BASE_delete_coupons', e)
-
-        return res
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
 
     async def select_vkontakte_reg(self):
 
@@ -2012,10 +2057,14 @@ class base:
                     )
                     result = await cursor.fetchall()
 
+            return result
         except Exception as e:
-            print('BASE_select_vkontakte_reg:', e)
-
-        return result
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
 
     async def delete_vkontakte_reg(self, talon, department):
 
@@ -2039,6 +2088,11 @@ class base:
                     await cursor.execute(
                         f"DELETE FROM vkontakte_reg WHERE sender = '{str(self.user_id)}' AND date = '{str(date_formatted)}' AND talon = '{talon}' AND department = '{department}';"
                     )
-
+            return
         except Exception as e:
-            print('BASE_delete_vkontakte_reg:', e)
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()

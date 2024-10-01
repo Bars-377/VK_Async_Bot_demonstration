@@ -52,6 +52,15 @@ logger.remove()  # Удаляем все существующие обработ
 # logger.error("vkbottle:logging is used as the default logger, but we recommend using loguru. It may also become a required dependency in future releases.")  # Это сообщение будет игнорироваться
 
 def process_1():
+    async def debug_print(message, user_id):
+        import inspect
+        # Получаем информацию о текущем фрейме
+        frame = inspect.currentframe()
+        # Получаем номер строки, где вызвана функция debug_print
+        line_number = frame.f_back.f_lineno
+        # Печатаем сообщение с номером строки
+        print(f"Line {line_number}: {message}, user_id: {user_id}")
+
     ctx = CtxStorage()
     bot = Bot(token=config["VKONTAKTE"]["token"])
 
@@ -319,6 +328,7 @@ def process_1():
                 'Октябрьское', 'Рыболово', 'Турунтаево')
 
     async def reset_ctx(user_id):
+        await debug_print('ВХОД В ФУНКЦИЮ reset_ctx', user_id)
         # Создаем список ключей для удаления
         keys_to_remove = [key for key in ctx.__dict__['storage'] if str(user_id) in key and \
         'talon_select_vkontakte_reg' not in key and \
@@ -331,8 +341,11 @@ def process_1():
 
         # # Проверка текущего состояния storage
         # print('Текущее состояние storage:', ctx.__dict__['storage'])
+        await debug_print('ВЫХОД ИЗ ФУНКЦИИ reset_ctx', user_id)
+        return
 
     async def notification_delete_coupon(user_id, message):
+        await debug_print('ВХОД В ФУНКЦИЮ notification_delete_coupon', user_id)
         result = await base(user_id = user_id).select_vkontakte_reg()
 
         if not result == [] and result != ():
@@ -349,19 +362,21 @@ def process_1():
             ctx.set(f'{user_id}: department_select_vkontakte_reg', department)
 
             keyboard = await buttons.delete_coupon(uuid, talon, department, date, tel, fio)
+            await debug_print('ВЫХОД ИЗ ФУНКЦИИ notification_delete_coupon', user_id)
             return await message.answer(f"Вы хотите подтвердить или удалить талон {talon}, филиал: {department}, услуга: {service}, время: {date} в {time_}?", keyboard=keyboard)
 
     @bot.on.message(state=SuperStates.GRADE)
     async def grade(message: Message):
         try:
-
             user_id = message.from_id
+            await debug_print('ВХОД В ФУНКЦИЮ grade', user_id)
             contexts = {"application_service": None, "contact_application": None, "fio_application": None}
             users_info = await bot.api.users.get(message.from_id)
 
             back_list = ('back_1', 'back_13', 'back_5', 'back_6', 'back_6')
 
             async def number_review():
+                await debug_print('ВХОД В ФУНКЦИЮ number_review', user_id)
                 await message.answer("Спасибо за ваш отзыв и оценку")
 
                 number_statement = ctx.get(f'{user_id}: number_statement')
@@ -373,7 +388,10 @@ def process_1():
                 number_employee = ctx.get(f'{user_id}: number_employee')
                 number_review = ctx.get(f'{user_id}: number_review')
 
-                questions = (number_statement, number_date, number_department, number_grade, number_waiting_time, number_time, number_employee, number_review)
+                import datetime
+                date_now = str(datetime.datetime.now().date())
+
+                questions = (number_statement, number_date, number_department, number_grade, number_waiting_time, number_time, number_employee, number_review, date_now)
 
                 await base().base_review(*questions)
 
@@ -386,6 +404,7 @@ def process_1():
                 await buttons.menu(user_id, config["VKONTAKTE"]["token"])
                 # Очистка всех переменных
                 await reset_ctx(user_id)
+                await debug_print('ВЫХОД ИЗ ФУНКЦИИ number_review', user_id)
                 return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
             try:
@@ -415,12 +434,12 @@ def process_1():
 
                 elif ctx.get(f'{user_id}: number_grade') != 'None' and ctx.get(f'{user_id}: number_waiting_time') == 'None':
                     ctx.set(f"{user_id}: number_waiting_time", payload_data)
-                    keyboard = await buttons.reception()
-                    return await message.answer("Время предоставления услуги", keyboard=keyboard)
+                    keyboard = await buttons.reception_1()
+                    return await message.answer("Время предоставления государственной услуги", keyboard=keyboard)
 
                 elif ctx.get(f'{user_id}: number_waiting_time') != 'None' and ctx.get(f'{user_id}: number_time') == 'None':
                     ctx.set(f"{user_id}: number_time", payload_data)
-                    keyboard = await buttons.reception()
+                    keyboard = await buttons.reception_2()
                     return await message.answer("Вежливость и компетентность сотрудника МФЦ", keyboard=keyboard)
 
                 elif ctx.get(f'{user_id}: number_time') != 'None':
@@ -448,20 +467,22 @@ def process_1():
                 pattern_date = r'\d{4}-\d{2}-\d{2}'
 
                 if ctx.get(f'{user_id}: number_statement') == 'None' and re.search(pattern_number_statement, message.text):
-                    ctx.set(f"{user_id}: number_statement", message.text)
+                    ctx.set(f"{user_id}: number_statement", re.search(pattern_number_statement, message.text).group())
 
-                    ctx.set(f"{user_id}: number_department", bid_locations[message.text[0:2]])
+                    ctx.set(f"{user_id}: number_department", bid_locations[re.search(pattern_number_statement, message.text).group()[0:2]])
 
                     keyboard = await buttons.menu_menu()
-                    return await message.answer("Укажите дату посещения (Формат: 2024-07-11)", keyboard=keyboard)
+                    return await message.answer("Укажите дату посещения в формате год-месяц-дата (Например: 2024-07-25)", keyboard=keyboard)
                 elif ctx.get(f'{user_id}: number_date') == 'None' and re.search(pattern_date, message.text):
-                    ctx.set(f"{user_id}: number_date", message.text)
+                    ctx.set(f"{user_id}: number_date", re.search(pattern_date, message.text).group())
                     keyboard = await buttons.reception()
-                    return await message.answer("Оцените по пятибальной шкале, где 'Пять' наивысшая оценка\n\nЗарегистрироваться на приём было просто и удобно", keyboard=keyboard)
+                    return await message.answer("Зарегистрироваться на приём было", keyboard=keyboard)
 
                 else:
                     keyboard = await buttons.menu_menu()
                     return await message.answer("Вы ввели некорректные данные. Попробуйте ввести данные ещё раз.", keyboard=keyboard)
+            await debug_print('ВЫХОД ИЗ ФУНКЦИИ grade', user_id)
+            return
         except Exception as e:
             # Вывод подробной информации об ошибке
             print(f"Поймано исключение: {type(e).__name__}")
@@ -475,7 +496,8 @@ def process_1():
     @bot.on.message(state=SuperStates.APPLICATION)
     async def application(message: Message):
         try:
-
+            user_id = message.from_id
+            await debug_print('ВХОД В ФУНКЦИЮ application', user_id)
             async def post_application():
                 if ctx.get(f'{user_id}: category_application') == 'None':
                     ctx.set(f'{user_id}: category_application', '')
@@ -498,7 +520,6 @@ def process_1():
                 await reset_ctx(user_id)
                 return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
-            user_id = message.from_id
             contexts = {"application_service": None, "contact_application": None, "fio_application": None}
             users_info = await bot.api.users.get(message.from_id)
 
@@ -593,6 +614,8 @@ def process_1():
                     ctx.set(f'{user_id}: contact_application', 'None')
                     keyboard = await buttons.menu_menu()
                     return await message.answer("Вы ввели некорректные данные. Попробуйте ввести данные ещё раз.\n\nНапишите:\n- свой контактный номер телефона;\n- адрес по которому необходимо осуществить выезд специалиста;\n- адрес электронной почты.\n\nНапример, 88003500850, ул. Фрунзе 103д, md.tomsk.ru", keyboard=keyboard)
+            await debug_print('ВЫХОД ИЗ ФУНКЦИИ application', user_id)
+            return
         except Exception as e:
             # Вывод подробной информации об ошибке
             print(f"Поймано исключение: {type(e).__name__}")
@@ -607,6 +630,7 @@ def process_1():
     async def anniversary(message: Message):
         try:
             user_id = message.from_id
+            await debug_print('ВХОД В ФУНКЦИЮ anniversary', user_id)
             users_info = await bot.api.users.get(message.from_id)
 
             try:
@@ -637,7 +661,8 @@ def process_1():
                 # Очистка всех переменных
                 await reset_ctx(user_id)
                 return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
-
+            await debug_print('ВЫХОД ИЗ ФУНКЦИИ anniversary', user_id)
+            return
         except Exception as e:
             # Вывод подробной информации об ошибке
             print(f"Поймано исключение: {type(e).__name__}")
@@ -652,6 +677,7 @@ def process_1():
     async def status(message: Message):
         try:
             user_id = message.from_id
+            await debug_print('ВХОД В ФУНКЦИЮ status', user_id)
             users_info = await bot.api.users.get(message.from_id)
 
             try:
@@ -690,6 +716,8 @@ def process_1():
                 else:
                     keyboard = await buttons.menu_menu()
                     return await message.answer("Вы ввели некорректные данные. Попробуйте ввести данные ещё раз.", keyboard=keyboard)
+            await debug_print('ВЫХОД ИЗ ФУНКЦИИ status', user_id)
+            return
         except Exception as e:
             # Вывод подробной информации об ошибке
             print(f"Поймано исключение: {type(e).__name__}")
@@ -704,6 +732,7 @@ def process_1():
     async def phone_input(message: Message):
         try:
             user_id = message.from_id
+            await debug_print('ВХОД В ФУНКЦИЮ phone_input', user_id)
             pattern_telephone = r'^(8|\+7)[0-9]{10}$'
 
             if re.match(pattern_telephone, message.text):
@@ -731,6 +760,8 @@ def process_1():
 
             else:
                 return await message.answer("Пожалуйста, убедитесь, что введённый вами номер телефона начинается с +7 или 8 и состоит из 11 цифр, без каких-либо знаков препинания. Возможно, вы ошиблись при вводе. Попробуйте ещё раз.")
+            await debug_print('ВЫХОД ИЗ ФУНКЦИИ phone_input', user_id)
+            return
         except Exception as e:
             # Вывод подробной информации об ошибке
             print(f"Поймано исключение: {type(e).__name__}")
@@ -745,9 +776,11 @@ def process_1():
     async def agreement_input(message: Message):
         try:
             user_id = message.from_id
+            await debug_print('ВХОД В ФУНКЦИЮ agreement_input', user_id)
             users_info = await bot.api.users.get(message.from_id)
 
             async def agreement_scenario_inside_filials():
+                await debug_print('ВХОД В ФУНКЦИЮ agreement_scenario_inside_filials', user_id)
                 # answer = await base(user_id = user_id).phone_select()
 
                 # agreement_answer = await base(user_id = user_id).agreement_select()
@@ -771,9 +804,11 @@ def process_1():
                 await bot.state_dispenser.set(message.peer_id, SuperStates.FILIALS)
                 await message.answer("Обращаем Ваше внимание, что прием осуществляется только при соответствии информации, указанной в талоне, с данными заявителя.")
                 await message.answer("Записаться на приём вы так же можете:\n- в личном кабинете на официальном сайте МФЦ https://md.tomsk.ru;\n- через чат-бот ВКонтакте https://vk.com/im?sel=-224967611;\n- через сектор информирования в отделах МФЦ;\n- через контакт-центр МФЦ по номерам  8-800-350-08-50 (звонок бесплатный), 602-999.")
+                await debug_print('ВЫХОД ИЗ ФУНКЦИИ agreement_scenario_inside_filials', user_id)
                 return await message.answer("Выберите филиал", keyboard=keyboard)
 
             async def agreement_scenario_inside_application():
+                await debug_print('ВХОД В ФУНКЦИЮ agreement_scenario_inside_application', user_id)
                 # answer = await base(user_id = user_id).phone_select()
 
                 # agreement_answer = await base(user_id = user_id).agreement_select()
@@ -795,10 +830,11 @@ def process_1():
                 await base(user_id=user_id).base_count_application()
                 keyboard = await buttons.application()
                 await bot.state_dispenser.set(message.peer_id, SuperStates.FILIALS)
+                await debug_print('ВЫХОД ИЗ ФУНКЦИИ agreement_scenario_inside_application', user_id)
                 return await message.answer("Услуга по выезду сотрудника МФЦ к заявителю для приёма заявлений и документов, а так же доставки результатов предоставления услуг осуществляется:\n- платно (для всех)\n- бесплатно (для отдельных категорий граждан).", keyboard=keyboard)
 
-
             async def agreement_scenario_outside(agreement_input):
+                await debug_print('ВХОД В ФУНКЦИЮ agreement_scenario_outside', user_id)
                 phone = ctx.get(f'{user_id}: phone')
                 await base(user_id = user_id, tel = phone).agreement_input(agreement_input)
 
@@ -811,7 +847,7 @@ def process_1():
                     return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
 
                 answer = await base(user_id = user_id).phone_select()
-
+                await debug_print('ВЫХОД ИЗ ФУНКЦИИ agreement_scenario_outside', user_id)
                 if answer[0]:
 
                     agreement = ctx.get(f'{user_id}: agreement')
@@ -846,7 +882,8 @@ def process_1():
             except:
                 keyboard = await buttons.menu_menu()
                 return await message.answer("Вы ввели некорректные данные. Попробуйте ввести данные ещё раз.", keyboard=keyboard)
-
+            await debug_print('ВЫХОД ИЗ ФУНКЦИИ agreement_input', user_id)
+            return
         except Exception as e:
             # Вывод подробной информации об ошибке
             print(f"Поймано исключение: {type(e).__name__}")
@@ -861,6 +898,7 @@ def process_1():
     async def phone_input_new(message: Message):
         try:
             user_id = message.from_id
+            await debug_print('ВХОД В ФУНКЦИЮ phone_input_new', user_id)
             users_info = await bot.api.users.get(message.from_id)
 
             try:
@@ -905,6 +943,8 @@ def process_1():
                 else:
                     keyboard = await buttons.menu_menu()
                     return await message.answer("Вы ввели некорректные данные. Попробуйте ввести данные ещё раз.", keyboard=keyboard)
+            await debug_print('ВЫХОД ИЗ ФУНКЦИИ phone_input_new', user_id)
+            return
         except Exception as e:
             # Вывод подробной информации об ошибке
             print(f"Поймано исключение: {type(e).__name__}")
@@ -915,11 +955,11 @@ def process_1():
             keyboard = await buttons.menu_menu()
             return await message.answer("Ошибка соединения с сервером", keyboard=keyboard)
 
-
     @bot.on.message(state=SuperStates.INF_COUPONS)
     async def information_coupons(message: Message):
         try:
             user_id = message.from_id
+            await debug_print('ВХОД В ФУНКЦИЮ information_coupons', user_id)
             users_info = await bot.api.users.get(message.from_id)
 
             try:
@@ -958,6 +998,8 @@ def process_1():
                 else:
                     keyboard = await buttons.menu_menu()
                     return await message.answer("Вы ввели некорректные данные", keyboard=keyboard)
+            await debug_print('ВЫХОД ИЗ ФУНКЦИИ information_coupons', user_id)
+            return
         except Exception as e:
             # Вывод подробной информации об ошибке
             print(f"Поймано исключение: {type(e).__name__}")
@@ -972,6 +1014,7 @@ def process_1():
     async def information_mfc(message: Message):
         try:
             user_id = message.from_id
+            await debug_print('ВХОД В ФУНКЦИЮ information_mfc', user_id)
             users_info = await bot.api.users.get(message.from_id)
 
             try:
@@ -1672,7 +1715,8 @@ def process_1():
             except:
                 keyboard = await buttons.menu_menu()
                 return await message.answer("Вы ввели некорректные данные", keyboard=keyboard)
-
+            await debug_print('ВЫХОД ИЗ ФУНКЦИИ information_mfc', user_id)
+            return
         except Exception as e:
             # Вывод подробной информации об ошибке
             print(f"Поймано исключение: {type(e).__name__}")
@@ -1687,6 +1731,7 @@ def process_1():
     async def events(message: Message):
         try:
             user_id = message.from_id
+            await debug_print('ВХОД В ФУНКЦИЮ events', user_id)
             users_info = await bot.api.users.get(message.from_id)
 
             try:
@@ -1767,7 +1812,8 @@ def process_1():
             except:
                 keyboard = await buttons.menu_menu()
                 return await message.answer("Вы ввели некорректные данные", keyboard=keyboard)
-
+            await debug_print('ВЫХОД ИЗ ФУНКЦИИ events', user_id)
+            return
         except Exception as e:
             # Вывод подробной информации об ошибке
             print(f"Поймано исключение: {type(e).__name__}")
@@ -1782,6 +1828,7 @@ def process_1():
     async def consultation_mfc(message: Message):
         try:
             user_id = message.from_id
+            await debug_print('ВХОД В ФУНКЦИЮ consultation_mfc', user_id)
             users_info = await bot.api.users.get(message.from_id)
 
             try:
@@ -2095,7 +2142,8 @@ def process_1():
             except:
                 keyboard = await buttons.menu_menu()
                 return await message.answer("Вы ввели некорректные данные", keyboard=keyboard)
-
+            await debug_print('ВЫХОД ИЗ ФУНКЦИИ consultation_mfc', user_id)
+            return
         except Exception as e:
             # Вывод подробной информации об ошибке
             print(f"Поймано исключение: {type(e).__name__}")
@@ -2110,6 +2158,7 @@ def process_1():
     async def delete_coupons(message: Message):
         try:
             user_id = message.from_id
+            await debug_print('ВХОД В ФУНКЦИЮ delete_coupons', user_id)
             users_info = await bot.api.users.get(message.from_id)
 
             try:
@@ -2220,6 +2269,8 @@ def process_1():
             except:
                 keyboard = await buttons.menu_menu()
                 return await message.answer("Вы ввели некорректные данные", keyboard=keyboard)
+            await debug_print('ВЫХОД ИЗ ФУНКЦИИ delete_coupons', user_id)
+            return
         except Exception as e:
             # Вывод подробной информации об ошибке
             print(f"Поймано исключение: {type(e).__name__}")
@@ -2234,6 +2285,7 @@ def process_1():
     async def filials(message: Message):
         try:
             user_id = message.from_id
+            await debug_print('ВХОД В ФУНКЦИЮ filials', user_id)
 
             users_info = await bot.api.users.get(message.from_id)
 
@@ -2363,6 +2415,7 @@ def process_1():
                 ctx.set(f'{user_id}: application_location', '2')
                 ctx.set(f'{user_id}: category_application', privileges[payload_data])
 
+            await debug_print('ВЫХОД ИЗ ФУНКЦИИ filials', user_id)
             if payload_data == 'filials' or payload_data == 'back_1' or payload_data == 'back':
 
                 answer = await base(user_id = user_id).phone_select()
@@ -2596,9 +2649,10 @@ def process_1():
             return await message.answer("Ошибка соединения с сервером", keyboard=keyboard)
 
     @bot.on.message(state=SuperStates.DEPARTMENT)
-    async def reg_service(message: Message):
+    async def department(message: Message):
         try:
             user_id = message.from_id
+            await debug_print('ВХОД В ФУНКЦИЮ department', user_id)
 
             users_info = await bot.api.users.get(message.from_id)
             try:
@@ -2690,6 +2744,8 @@ def process_1():
                 ctx.set(f'{user_id}: department', filials_id[payload_data])
                 keyboard = await buttons.services_section(ctx.get(f'{user_id}: department'))
                 return await message.answer("Выберите услугу", keyboard=keyboard)
+            await debug_print('ВЫХОД ИЗ ФУНКЦИИ department', user_id)
+            return
         except Exception as e:
             # Вывод подробной информации об ошибке
             print(f"Поймано исключение: {type(e).__name__}")
@@ -2701,9 +2757,10 @@ def process_1():
             return await message.answer("Ошибка соединения с сервером", keyboard=keyboard)
 
     @bot.on.message(state=SuperStates.SERVICE)
-    async def reg_service(message: Message):
+    async def service(message: Message):
         try:
             user_id = message.from_id
+            await debug_print('ВХОД В ФУНКЦИЮ service', user_id)
             users_info = await bot.api.users.get(message.from_id)
             try:
                 payload_data = eval(message.payload)['cmd']
@@ -2777,6 +2834,8 @@ def process_1():
             await bot.state_dispenser.set(message.peer_id, SuperStates.FIELDS)
             keyboard = await buttons.params_1()
             await message.answer("Назовите количество дел", keyboard=keyboard)
+            await debug_print('ВЫХОД ИЗ ФУНКЦИИ service', user_id)
+            return
         except Exception as e:
             # Вывод подробной информации об ошибке
             print(f"Поймано исключение: {type(e).__name__}")
@@ -2788,9 +2847,10 @@ def process_1():
             return await message.answer("Ошибка соединения с сервером", keyboard=keyboard)
 
     @bot.on.message(state=SuperStates.FIELDS)
-    async def params(message: Message):
+    async def fields(message: Message):
         try:
             user_id = message.from_id
+            await debug_print('ВХОД В ФУНКЦИЮ fields', user_id)
             users_info = await bot.api.users.get(message.from_id)
             service_id = ctx.get(f'{user_id}: service')
 
@@ -2808,8 +2868,105 @@ def process_1():
                     "tel_cache", "fio_cache", "yes_no_cache",
                     "times"}
 
+            async def write_to_file(text):
+                await debug_print('ВХОД В ФУНКЦИЮ write_to_file', user_id)
+                import os
+                # Указываем директорию для сохранения файла
+                folder_path = 'C:\\Users\\neverov\\Desktop\\file'  # Укажите путь к папке
+                os.makedirs(folder_path, exist_ok=True)  # Создает папку, если она не существует
+
+                file_path = os.path.join(folder_path, f'info_{user_id}.txt')  # Путь к файлу
+
+                # Асинхронно записываем текст в файл
+                async with aiofiles.open(file_path, 'a', encoding='utf-8') as file:
+                    await file.write(text)
+                await debug_print('ВЫХОД ИЗ ФУНКЦИИ write_to_file', user_id)
+                return
+
+            date = ctx.get(f'{user_id}: date')
+            time = ctx.get(f'{user_id}: time')
+            department = ctx.get(f'{user_id}: department')
+            service = ctx.get(f'{user_id}: service')
+
+            SSR = (date, time, department, service)
+
+            async def post_file(file_name):
+                await debug_print('ВХОД В ФУНКЦИЮ post_file', user_id)
+                import os
+
+                file_name_format = str(file_name.title).split('.')[1]
+                file_name = f'passport_{user_id}.{file_name_format}'
+
+                # Путь к директории, куда сохранять файлы
+                DOWNLOAD_PATH = "C:\\Users\\neverov\\Desktop\\file"
+
+                # Создадим директорию, если она не существует
+                if not os.path.exists(DOWNLOAD_PATH):
+                    os.makedirs(DOWNLOAD_PATH)
+                await debug_print('ВЫХОД ИЗ ФУНКЦИИ ФУНКЦИЮ post_file', user_id)
+                # Проверяем, есть ли вложения и является ли первое вложение документом
+                if message.attachments and len(message.attachments) > 0 and message.attachments[0].doc:
+                    print('POPAL_NEVEROV_ВНУТРИ')
+                    document = message.attachments[0].doc
+
+                    # Получаем расширение файла
+                    file_extension = document.ext
+
+                    # Проверка, что файл не имеет расширение .rar
+                    if file_extension.lower() == 'rar':
+                        return False, 'Файлы с расширением .rar не поддерживаются'
+
+                    # Получаем URL для загрузки документа
+                    file_url = document.url
+
+                    # import random
+
+                    # random_int = random.randint(1, 10000)
+
+                    # Имя файла (например, example.pdf)
+                    # file_name = document.title
+                    # file_name_format = str(document.title).split('.')[1]
+                    # file_name = f'{str(random_int)}_{str(user_id)}.{file_name_format}'
+
+                    # Полный путь, куда сохранять файл
+                    file_path = os.path.join(DOWNLOAD_PATH, file_name)
+
+                    # count = 0
+                    # while os.path.isfile(file_path) and count != 5:
+                    #     random_int = random.randint(1, 10000)
+                    #     file_name = f'{str(random_int)}_{str(user_id)}.{file_name_format}'
+                    #     count += 1
+
+                    # Загружаем файл с сервера ВКонтакте и сохраняем его
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get(file_url) as resp:
+                            if resp.status == 200:
+                                with open(file_path, 'wb') as f:
+                                    f.write(await resp.read())
+
+                    return True, f"Файл '{file_name}' сохранён."
+                else:
+                    # Если вложений нет или они не являются документами
+                    return False, 'В вашем сообщении нет документа. Введите причину отсутствия документа.'
+
             try:
                 payload_data = eval(message.payload)['cmd']
+
+                if payload_data == 'no_no':
+                    await bot.state_dispenser.set(message.peer_id, SuperStates.DATE)
+                    print('--------------------------------------------')
+                    await debug_print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1', user_id)
+                    print(*SSR)
+                    print(ctx.get(f'{user_id}: fields'))
+                    print('--------------------------------------------')
+                    keyboard = await buttons.date_1(*SSR, ctx.get(f'{user_id}: fields'))
+                    keyboard_data = json.loads(keyboard)
+                    payload_value = keyboard_data['buttons'][0][0]['action']['payload']
+                    payload = eval(str(payload_value))['cmd']
+                    if payload == 'menu':
+                        return await message.answer("На эту услугу нет свободных дат", keyboard=keyboard)
+                    else:
+                        return await message.answer("Выберите свободную дату", keyboard=keyboard)
 
                 if payload_data == 'back':
 
@@ -2848,6 +3005,88 @@ def process_1():
 
             except:
 
+                """ОТПРАВЛЯТЬ ФАЙЛЫ"""
+
+                if ctx.get(f'{user_id}: button_cache_file') == 'yes':
+                    try:
+                        post = await post_file(message.attachments[0].doc)
+
+                        if post[0]:
+                            # Отправляем сообщение о том, что файл сохранён
+                            await message.answer(post[1])
+                            ctx.set(f'{user_id}: button_cache_file_1', 'yes')
+                            ctx.set(f'{user_id}: button_cache_file', '')
+                            keyboard = await buttons.menu_menu_file()
+                            return await message.answer("Загрузите все страницы выписки из ЕГРН.", keyboard=keyboard)
+                        else:
+                            ctx.set(f'{user_id}: button_cache_file_1', '')
+                            ctx.set(f'{user_id}: button_cache_file', '')
+                            await write_to_file(f'Нет Паспорта: {message.text}, ')
+                            keyboard = await buttons.menu_menu_file()
+                            return await message.answer(post[1], keyboard=keyboard)
+                    except:
+                        ctx.set(f'{user_id}: button_cache_file_1', '')
+                        ctx.set(f'{user_id}: button_cache_file', '')
+                        await write_to_file(f'Нет Паспорта: {message.text}, ')
+                        keyboard = await buttons.menu_menu_file()
+                        return await message.answer('В вашем сообщении нет документа. Введите причину отсутствия документа.', keyboard=keyboard)
+
+                elif ctx.get(f'{user_id}: button_cache_file_1') == 'yes':
+                    print('ВТОРОЙ ДОКУМЕНТ')
+                    try:
+
+                        post = await post_file(message.attachments[0].doc)
+
+                        if post[0]:
+
+                            # Отправляем сообщение о том, что файл сохранён
+                            await message.answer(post[1])
+                            await message.answer("Спапсибо за обращение.")
+                            ctx.set(f'{user_id}: button_cache_file_1', '')
+
+                            await bot.state_dispenser.set(message.peer_id, SuperStates.DATE)
+                            print('--------------------------------------------')
+                            await debug_print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1', user_id)
+                            print(*SSR)
+                            print(ctx.get(f'{user_id}: fields'))
+                            print('--------------------------------------------')
+                            keyboard = await buttons.date_1(*SSR, ctx.get(f'{user_id}: fields'))
+                            keyboard_data = json.loads(keyboard)
+                            payload_value = keyboard_data['buttons'][0][0]['action']['payload']
+                            payload = eval(str(payload_value))['cmd']
+                            if payload == 'menu':
+                                return await message.answer("На эту услугу нет свободных дат", keyboard=keyboard)
+                            else:
+                                return await message.answer("Выберите свободную дату", keyboard=keyboard)
+
+                        else:
+                            ctx.set(f'{user_id}: button_cache_file_1', '')
+                            await write_to_file(f'Нет ЕГРН: {message.text}, ')
+                            keyboard = await buttons.menu_menu_file()
+                            return await message.answer(post[1], keyboard=keyboard)
+                    except:
+                        ctx.set(f'{user_id}: button_cache_file_1', '')
+                        await write_to_file(f'Нет ЕГРН: {message.text}, ')
+                        keyboard = await buttons.menu_menu_file()
+                        return await message.answer('В вашем сообщении нет документа. Введите причину отсутствия документа.', keyboard=keyboard)
+
+                print('---------------------------------------')
+                print(ctx.get(f'{user_id}: button_cache_file_start'))
+                print(ctx.get(f'{user_id}: service'))
+                print(ctx.get(f'{user_id}: field_1'))
+                print(ctx.get(f'{user_id}: field_2'))
+                print(ctx.get(f'{user_id}: field_3'))
+                print(ctx.get(f'{user_id}: field_4'))
+                print(ctx.get(f'{user_id}: field_6'))
+
+                """НАЧАЛО ЗАГРУЗКИ ФАЙЛОВ"""
+
+                # if ctx.get(f'{user_id}: button_cache_file_start') != 'yes' and ctx.get(f'{user_id}: service') == '8f5e514e-dcce-41cf-8b56-38db6af10056' and ctx.get(f'{user_id}: field_1') != 'None' and ctx.get(f'{user_id}: field_2') != 'None' and ctx.get(f'{user_id}: field_3') != 'None' and ctx.get(f'{user_id}: field_4') != 'None' and ctx.get(f'{user_id}: field_6') != 'None':
+                #     ctx.set(f'{user_id}: button_cache_file_start', 'yes')
+
+                #     keyboard = await buttons.yes_no_doc()
+                #     return await message.answer("Мы заботимся о вашем времени! Для вашего удобства предлагаем возможность отправки необходимых документов онлайн, что позволит сохранить время, затрачиваемое на приёме.", keyboard=keyboard)
+
                 if service_id == '8f5e514e-dcce-41cf-8b56-38db6af10056' and ctx.get(f'{user_id}: field_6') == 'None':
                     ctx.set(f'{user_id}: field_6', message.text)
                     keyboard = await buttons.params_2()
@@ -2857,12 +3096,6 @@ def process_1():
                     keyboard = await buttons.menu_menu()
                     return await message.answer("Укажите сферу услуг, с которой связан ваш вопрос", keyboard=keyboard)
                 elif service_id == '52cc58f4-2f75-46b2-8065-abe1c6ed6889' and ctx.get(f'{user_id}: field_3') == 'None':
-                    date = ctx.get(f'{user_id}: date')
-                    time = ctx.get(f'{user_id}: time')
-                    department = ctx.get(f'{user_id}: department')
-                    service = ctx.get(f'{user_id}: service')
-
-                    SSR = (date, time, department, service)
 
                     ctx.set('field_3', message.text)
 
@@ -2880,7 +3113,7 @@ def process_1():
 
                     await bot.state_dispenser.set(message.peer_id, SuperStates.DATE)
                     print('--------------------------------------------')
-                    print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1 НА СТРОЧКЕ 2873')
+                    await debug_print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1', user_id)
                     print(*SSR)
                     print(ctx.get(f'{user_id}: fields'))
                     print('--------------------------------------------')
@@ -2938,14 +3171,7 @@ def process_1():
                 keyboard = await buttons.menu_menu()
                 return await message.answer("Укажите тип объекта недвижимости (жилое помещение, квартира; нежилое помещение; земельный участок)", keyboard=keyboard)
 
-            date = ctx.get(f'{user_id}: date')
-            time = ctx.get(f'{user_id}: time')
-            department = ctx.get(f'{user_id}: department')
-            service = ctx.get(f'{user_id}: service')
-
-            SSR = (date, time, department, service)
-
-            if payload_data in numbers or 'yes' in payload_data or 'no' in payload_data:
+            if payload_data in numbers or 'yes' in payload_data or 'no' in payload_data or ctx.get(f'{user_id}: button_cache_file_files') == 'yes':
                 if service_id == '8f5e514e-dcce-41cf-8b56-38db6af10056' and field_2 == 'None':
                     ctx.set(f'{user_id}: field_2', payload_data)
                     keyboard = await buttons.params_1()
@@ -2958,7 +3184,7 @@ def process_1():
                     ctx.set(f'{user_id}: field_4', payload_data)
                     keyboard = await buttons.yes_no()
                     await message.answer("Уточните, необходимо ли составить договор купли-продажи или дарения?", keyboard=keyboard)
-                elif service_id == '8f5e514e-dcce-41cf-8b56-38db6af10056' and field_5 == 'None':
+                elif ctx.get(f'{user_id}: button_cache_file_start') != 'yes' and service_id == '8f5e514e-dcce-41cf-8b56-38db6af10056' and field_5 == 'None':
                     ctx.set(f'{user_id}: field_5', payload_data)
 
                     if ctx.get(f'{user_id}: field_4') == 'yes':
@@ -2988,7 +3214,7 @@ def process_1():
 
                     await bot.state_dispenser.set(message.peer_id, SuperStates.DATE)
                     print('--------------------------------------------')
-                    print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1 НА СТРОЧКЕ 2981')
+                    await debug_print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1', user_id)
                     print(*SSR)
                     print(ctx.get(f'{user_id}: fields'))
                     print('--------------------------------------------')
@@ -3001,13 +3227,39 @@ def process_1():
                     else:
                         return await message.answer("Выберите свободную дату", keyboard=keyboard)
 
-                #     """--------------------------------------------------------"""
+                elif ctx.get(f'{user_id}: button_cache_file_start') == 'yes' and service_id == '8f5e514e-dcce-41cf-8b56-38db6af10056' and field_5 == 'None':
+                    ctx.set(f'{user_id}: field_5', payload_data)
 
-                # elif service_id == '8f5e514e-dcce-41cf-8b56-38db6af10056' and field_5 == 'yes':
-                #     keyboard = await buttons.yes_no()
-                #     await message.answer("Уточните, необходимо ли составить договор купли-продажи или дарения?", keyboard=keyboard)
+                    if ctx.get(f'{user_id}: field_4') == 'yes':
+                        kolvo_sred = '1'
+                    elif ctx.get(f'{user_id}: field_4') == 'no':
+                        kolvo_sred = '0'
 
-                #     """--------------------------------------------------------"""
+                    if ctx.get(f'{user_id}: field_5') == 'yes':
+                        kolvo_dog = '1'
+                    elif ctx.get(f'{user_id}: field_5') == 'no':
+                        kolvo_dog = '0'
+
+                    res = {
+                        "casecount": int(ctx.get(f'{user_id}: field_1')),
+                        "fields":
+                        {
+                            "aa50aae2-8879-4945-9553-825e911fc9c4": ctx.get(f'{user_id}: field_6'),
+                            "6e349207-5486-4efa-90a2-0f5b86765b36": ctx.get(f'{user_id}: field_3'),
+                            "cb3e610a-49cc-45c3-a7e4-7867036551ea": ctx.get(f'{user_id}: field_2'),
+                            "fec9e657-aa1c-428a-a7d9-c4d977d7cccd": kolvo_sred,
+                            "6c8b9903-e522-4d95-af0d-d7d1f688aa62": kolvo_dog,
+                        }
+                    }
+                    fields = json.dumps((res),ensure_ascii=False)
+
+                    ctx.set(f'{user_id}: fields', fields)
+
+                    ctx.set(f'{user_id}: cache_files', 'yes')
+
+                    ctx.set(f'{user_id}: button_cache_file', 'yes')
+                    keyboard = await buttons.menu_menu_file()
+                    return await message.answer("Загрузите непустые страницы вашего паспорта.", keyboard=keyboard)
 
                 elif service_id == '81914e42-5ce6-477a-a49c-52299d37f8ca' and field_5 == 'None':
                     ctx.set(f'{user_id}: field_5', payload_data)
@@ -3033,7 +3285,7 @@ def process_1():
 
                     await bot.state_dispenser.set(message.peer_id, SuperStates.DATE)
                     print('--------------------------------------------')
-                    print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1 НА СТРОЧКЕ 3026')
+                    await debug_print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1', user_id)
                     print(*SSR)
                     print(ctx.get(f'{user_id}: fields'))
                     print('--------------------------------------------')
@@ -3069,7 +3321,7 @@ def process_1():
 
                     await bot.state_dispenser.set(message.peer_id, SuperStates.DATE)
                     print('--------------------------------------------')
-                    print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1 НА СТРОЧКЕ 3062')
+                    await debug_print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1', user_id)
                     print(*SSR)
                     print(ctx.get(f'{user_id}: fields'))
                     print('--------------------------------------------')
@@ -3104,7 +3356,7 @@ def process_1():
 
                     await bot.state_dispenser.set(message.peer_id, SuperStates.DATE)
                     print('--------------------------------------------')
-                    print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1 НА СТРОЧКЕ 3097')
+                    await debug_print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1', user_id)
                     print(*SSR)
                     print(ctx.get(f'{user_id}: fields'))
                     print('--------------------------------------------')
@@ -3133,9 +3385,10 @@ def process_1():
                     fields = json.dumps((res),ensure_ascii=False)
 
                     ctx.set(f'{user_id}: fields', fields)
+
                     await bot.state_dispenser.set(message.peer_id, SuperStates.DATE)
                     print('--------------------------------------------')
-                    print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1 НА СТРОЧКЕ 3028')
+                    await debug_print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1', user_id)
                     print(*SSR)
                     print(ctx.get(f'{user_id}: fields'))
                     print('--------------------------------------------')
@@ -3147,6 +3400,8 @@ def process_1():
                         return await message.answer("На эту услугу нет свободных дат", keyboard=keyboard)
                     else:
                         return await message.answer("Выберите свободную дату", keyboard=keyboard)
+            await debug_print('ВЫХОД ИЗ ФУНКЦИИ fields', user_id)
+            return
         except Exception as e:
             # Вывод подробной информации об ошибке
             print(f"Поймано исключение: {type(e).__name__}")
@@ -3161,6 +3416,7 @@ def process_1():
     async def handler_date(message: Message):
         try:
             user_id = message.from_id
+            await debug_print('ВХОД В ФУНКЦИЮ handler_date', user_id)
             users_info = await bot.api.users.get(message.from_id)
             try:
                 payload_data = eval(message.payload)['cmd']
@@ -3175,7 +3431,7 @@ def process_1():
                     ctx.get(f'{user_id}: service'),
                     ctx.get(f'{user_id}: fields'))
                 print('--------------------------------------------')
-                print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_2 НА СТРОЧКЕ 3167')
+                await debug_print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_2', user_id)
                 print(*SSR)
                 print('--------------------------------------------')
                 keyboard = await buttons.date_2(*SSR)
@@ -3222,6 +3478,8 @@ def process_1():
             keyboard, times = await buttons.times_buttons(ctx.get(f'{user_id}: date'), ctx.get(f'{user_id}: time'), *SSR)
             ctx.set(f'{user_id}: times', times)
             await message.answer("Выберите свободное время", keyboard=keyboard)
+            await debug_print('ВЫХОД ИЗ ФУНКЦИИ handler_date', user_id)
+            return
         except Exception as e:
             # Вывод подробной информации об ошибке
             print(f"Поймано исключение: {type(e).__name__}")
@@ -3236,6 +3494,7 @@ def process_1():
     async def handler_time(message: Message):
         try:
             user_id = message.from_id
+            await debug_print('ВХОД В ФУНКЦИЮ handler_time', user_id)
             users_info = await bot.api.users.get(message.from_id)
             try:
                 payload_data = eval(message.payload)['cmd']
@@ -3283,7 +3542,7 @@ def process_1():
                 ctx.set(f'{user_id}: time', 'None')
                 await bot.state_dispenser.set(message.peer_id, SuperStates.DATE)
                 print('--------------------------------------------')
-                print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1 НА СТРОЧКЕ 3074')
+                await debug_print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1', user_id)
                 print(ctx.get(f'{user_id}: date'))
                 print(ctx.get(f'{user_id}: time'))
                 print(*SSR)
@@ -3350,12 +3609,12 @@ def process_1():
             # lists_1 = {'time_ost_2', 'time_ost_3', 'time_ost_4', 'time_ost_5',
             #         'time_ost_6', 'time_ost_7', 'time_ost_8', 'time_ost_9', 'time_ost_10',
             #         'time_ost_11', 'time_ost_12'}
-
+            await debug_print('ВЫХОД ИЗ ФУНКЦИИ handler_time', user_id)
             # Пример вызова функции по ключу
             if payload_data in commands_4:
                 function_to_call = commands_4[payload_data]
                 print('--------------------------------------------')
-                print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ time НА СТРОЧКЕ 3348')
+                await debug_print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ time', user_id)
                 print(ctx.get(f'{user_id}: times'))
                 print('--------------------------------------------')
                 keyboard = await function_to_call(ctx.get(f'{user_id}: times'))
@@ -3386,62 +3645,8 @@ def process_1():
     @bot.on.message(state=SuperStates.PHONE)
     async def handler_fio(message: Message):
         try:
-
             user_id = message.from_id
-
-            async def post_file(file_name):
-                import os
-
-                # Путь к директории, куда сохранять файлы
-                DOWNLOAD_PATH = "C:\\Users\\neverov\\Desktop\\file"
-
-                # Создадим директорию, если она не существует
-                if not os.path.exists(DOWNLOAD_PATH):
-                    os.makedirs(DOWNLOAD_PATH)
-
-                # Проверяем, есть ли вложения и является ли первое вложение документом
-                if message.attachments and len(message.attachments) > 0 and message.attachments[0].doc:
-                    document = message.attachments[0].doc
-
-                    # Получаем расширение файла
-                    file_extension = document.ext
-
-                    # Проверка, что файл не имеет расширение .rar
-                    if file_extension.lower() == 'rar':
-                        return False, 'Файлы с расширением .rar не поддерживаются'
-
-                    # Получаем URL для загрузки документа
-                    file_url = document.url
-
-                    # import random
-
-                    # random_int = random.randint(1, 10000)
-
-                    # Имя файла (например, example.pdf)
-                    # file_name = document.title
-                    # file_name_format = str(document.title).split('.')[1]
-                    # file_name = f'{str(random_int)}_{str(user_id)}.{file_name_format}'
-
-                    # Полный путь, куда сохранять файл
-                    file_path = os.path.join(DOWNLOAD_PATH, file_name)
-
-                    # count = 0
-                    # while os.path.isfile(file_path) and count != 5:
-                    #     random_int = random.randint(1, 10000)
-                    #     file_name = f'{str(random_int)}_{str(user_id)}.{file_name_format}'
-                    #     count += 1
-
-                    # Загружаем файл с сервера ВКонтакте и сохраняем его
-                    async with aiohttp.ClientSession() as session:
-                        async with session.get(file_url) as resp:
-                            if resp.status == 200:
-                                with open(file_path, 'wb') as f:
-                                    f.write(await resp.read())
-
-                    return True, f"Файл '{file_name}' сохранён."
-                else:
-                    # Если вложений нет или они не являются документами
-                    return False, 'В вашем сообщении нет документа.'
+            await debug_print('ВХОД В ФУНКЦИЮ handler_fio', user_id)
 
             users_info = await bot.api.users.get(message.from_id)
             first_name = users_info[0].first_name
@@ -3482,71 +3687,8 @@ def process_1():
                 elif payload_data == 'yes_fi' and user_text is None:
                     user_text = f"{last_name} {first_name}"
 
-                elif payload_data == 'yes':
-                    ctx.set(f'{user_id}: button_cache_file', 'yes')
-                    keyboard = await buttons.menu_menu_file()
-                    return await message.answer("Загрузите непустые страницы вашего паспорта.", keyboard=keyboard)
-
-                elif payload_data == 'no':
-                    await bot.state_dispenser.set(message.peer_id, SuperStates.FILIALS)
-                    await message.answer("Ваши документы отправлены. В день приёма специалисты подготовят договор по предоставленным вами документам")
-                    await buttons.menu(user_id, config["VKONTAKTE"]["token"])
-                    # Очистка всех переменных
-                    await reset_ctx(user_id)
-                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
-
             except:
                 user_text = message.text
-
-            async def write_to_file(text):
-                import os
-                # Указываем директорию для сохранения файла
-                folder_path = 'C:\\Users\\neverov\\Desktop\\file'  # Укажите путь к папке
-                os.makedirs(folder_path, exist_ok=True)  # Создает папку, если она не существует
-
-                file_path = os.path.join(folder_path, f'info_{user_id}.txt')  # Путь к файлу
-
-                # Асинхронно записываем текст в файл
-                async with aiofiles.open(file_path, 'w', encoding='utf-8') as file:
-                    await file.write(text)
-
-            if ctx.get(f'{user_id}: button_cache_file') == 'yes':
-                document = message.attachments[0].doc
-                file_name_format = str(document.title).split('.')[1]
-                file_name = f'passport_{user_id}.{file_name_format}'
-                post = await post_file(file_name)
-                if post[0]:
-                    # Отправляем сообщение о том, что файл сохранён
-                    await message.answer(post[1])
-                    ctx.set(f'{user_id}: button_cache_file_1', 'yes')
-                    ctx.set(f'{user_id}: button_cache_file', '')
-                    keyboard = await buttons.menu_menu_file()
-                    return await message.answer("Загрузите все страницы выписки из ЕГРН.", keyboard=keyboard)
-                else:
-                    keyboard = await buttons.menu_menu_file()
-                    return await message.answer(post[1], keyboard=keyboard)
-            elif ctx.get(f'{user_id}: button_cache_file_1') == 'yes':
-                document = message.attachments[0].doc
-                file_name_format = str(document.title).split('.')[1]
-                file_name = f'egrn_{user_id}.{file_name_format}'
-                post = await post_file(file_name)
-                if post[0]:
-
-                    await write_to_file(ctx.get(f'{user_id}: answer_record'))
-
-                    # Отправляем сообщение о том, что файл сохранён
-                    await message.answer(post[1])
-                    await message.answer("Спапсибо за обращение.")
-                    ctx.set(f'{user_id}: button_cache_file_1', '')
-
-                    await bot.state_dispenser.set(message.peer_id, SuperStates.FILIALS)
-                    await buttons.menu(user_id, config["VKONTAKTE"]["token"])
-                    # Очистка всех переменных
-                    await reset_ctx(user_id)
-                    return await message.answer("{}".format(users_info[0].first_name) + ', Вы в главном меню')
-                else:
-                    keyboard = await buttons.menu_menu_file()
-                    return await message.answer(post[1], keyboard=keyboard)
 
             count_space = 0
             for char in message.text :
@@ -3567,18 +3709,27 @@ def process_1():
 
             ctx.set(f'{user_id}: fio', user_text)
 
+            async def write_to_file(text):
+                import os
+                # Указываем директорию для сохранения файла
+                folder_path = 'C:\\Users\\neverov\\Desktop\\file'  # Укажите путь к папке
+                os.makedirs(folder_path, exist_ok=True)  # Создает папку, если она не существует
+
+                file_path = os.path.join(folder_path, f'info_{user_id}.txt')  # Путь к файлу
+
+                # Асинхронно записываем текст в файл
+                async with aiofiles.open(file_path, 'a', encoding='utf-8') as file:
+                    await file.write(text)
+
             res = await base(user_id=user_id, tel = ctx.get(f'{user_id}: phone')).base_record(ctx.get(f'{user_id}: fio'), ctx.get(f'{user_id}: department'), ctx.get(f'{user_id}: service'), ctx.get(f'{user_id}: time'), ctx.get(f'{user_id}: date'), ctx.get(f'{user_id}: fields'))
             if res['code'] == 'ok':
-                answer_1 = f"{ctx.get(f'{user_id}: fio')}, {ctx.get(f'{user_id}: phone')}, Номер талона: " + str(res['number']) + ', дата визита: ' + str(res['dateTime'] + ', время визита: ' + str(res['visitTime']) + ', место визита: ' + str(res["department"]))
-                ctx.set(f'{user_id}: answer_record', answer_1)
-                answer_2 = "Вы записаны. Ваш номер талона: " + str(res['number']) + ', дата визита: ' + str(res['dateTime'] + ', время визита: ' + str(res['visitTime']) + ', место визита: ' + str(res["department"]))
-                await message.answer(answer_2)
 
-                """ОТПРАВЛЯТЬ ФАЙЛЫ"""
+                if ctx.get(f'{user_id}: cache_files') == 'yes':
+                    answer_1 = f"{ctx.get(f'{user_id}: fio')}, {ctx.get(f'{user_id}: phone')}, Номер талона: " + str(res['number']) + ', дата визита: ' + str(res['dateTime'] + ', время визита: ' + str(res['visitTime']) + ', место визита: ' + str(res["department"]))
+                    await write_to_file(answer_1)
 
-                # if ctx.get(f'{user_id}: service') == '8f5e514e-dcce-41cf-8b56-38db6af10056' and ctx.get(f'{user_id}: field_5') == 'yes':
-                #     keyboard = await buttons.yes_no_doc()
-                #     return await message.answer("Мы заботимся о вашем времени! Для вашего удобства предлагаем возможность отправки необходимых документов онлайн, что позволит сохранить время, затрачиваемое на приёме.", keyboard=keyboard)
+                answer = "Вы записаны. Ваш номер талона: " + str(res['number']) + ', дата визита: ' + str(res['dateTime'] + ', время визита: ' + str(res['visitTime']) + ', место визита: ' + str(res["department"]))
+                await message.answer(answer)
 
                 await bot.state_dispenser.set(message.peer_id, SuperStates.FILIALS)
                 await buttons.menu(user_id, config["VKONTAKTE"]["token"])
@@ -3592,7 +3743,7 @@ def process_1():
 
                 await bot.state_dispenser.set(message.peer_id, SuperStates.DATE)
                 print('--------------------------------------------')
-                print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1 НА СТРОЧКЕ 3577')
+                await debug_print('ПЕРЕД ВХОДОМ В ФУНКЦИЮ date_1', user_id)
                 print(ctx.get(f'{user_id}: date'))
                 print(ctx.get(f'{user_id}: time'))
                 print(*SSR)
@@ -3605,7 +3756,8 @@ def process_1():
                     return await message.answer("На эту услугу нет свободных дат", keyboard=keyboard)
                 else:
                     return await message.answer("Не удалось записаться. Возможно это время уже заняли. Пожалуйста попробуйте ещё раз выбрать свободную дату", keyboard=keyboard)
-
+            await debug_print('ВЫХОД ИЗ ФУНКЦИИ handler_fio', user_id)
+            return
         except Exception as e:
             # Вывод подробной информации об ошибке
             print(f"Поймано исключение: {type(e).__name__}")
@@ -3622,6 +3774,7 @@ def process_1():
     async def handler(message: Message):
         try:
             user_id = message.from_id
+            await debug_print('ВХОД В ФУНКЦИЮ handler', user_id)
             users_info = await bot.api.users.get(message.from_id)
 
             try:
@@ -3686,6 +3839,8 @@ def process_1():
             else:
                 await bot.state_dispenser.set(message.peer_id, SuperStates.PHONE_INPUT)
                 return await message.answer("Для полноценного пользования чат-ботом необходимо пройти регистрацию. Пожалуйста, укажите ВАШ постоянный номер телефона, который будет связан с вашим аккаунтом.(например, 88003500850)")
+            await debug_print('ВЫХОД ИЗ ФУНКЦИИ handler', user_id)
+            return
         except Exception as e:
             # Вывод подробной информации об ошибке
             print(f"Поймано исключение: {type(e).__name__}")
@@ -4126,7 +4281,7 @@ if __name__ == "__main__":
     # process5 = Process(target=process_5)
     # process6 = Process(target=process_6)
     # process7 = Process(target=process_7)
-    # process8 = Process(target=process_8)
+    process8 = Process(target=process_8)
 
     # process1.start()
     # process2.start()
@@ -4175,7 +4330,7 @@ if __name__ == "__main__":
         #     process7 = Process(target=process_7)
         #     process7.start()
         #     # process7.join()
-        # elif not process8.is_alive():
-        #     process8 = Process(target=process_8)
-        #     process8.start()
-        #     # process7.join()
+        elif not process8.is_alive():
+            process8 = Process(target=process_8)
+            process8.start()
+            # process7.join()
