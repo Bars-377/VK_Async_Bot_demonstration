@@ -454,8 +454,13 @@ def process_file():
     import os
     import requests
 
+    import configparser
+    # Чтение конфигурации
+    config = configparser.ConfigParser()
+    config.read("config.ini")
+
     # Ваш токен бота
-    TOKEN = "6910991480:AAHecZctB4SuhT6AWfPbPb7SuxH97mONzN0"
+    TOKEN = config["TELEGRAM"]["token"]
 
     def search_user_id():
         import mysql.connector
