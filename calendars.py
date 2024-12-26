@@ -3,6 +3,11 @@ import os
 # import threading
 import time
 
+host="172.18.11.104"
+user="root"
+password="enigma1418"
+database="mdtomskbot"
+
 def process_calendar():
     while True:
         def file(location):
@@ -31,10 +36,10 @@ def process_calendar():
             try:
                 res = 'yes'
                 with mysql.connector.connect(
-                    host="172.18.11.103",
-                    user="root",
-                    password="enigma1418",
-                    database="mdtomskbot",
+                    host=host,
+                    user=user,
+                    password=password,
+                    database=database,
                     connection_timeout=2
                 ) as mydb:
                     mycursor = mydb.cursor()

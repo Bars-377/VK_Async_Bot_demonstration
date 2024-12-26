@@ -272,7 +272,8 @@ services = {
             'Предоставление сведений из ЕГРН': '77a009c9-f183-4ac6-9275-ae9ff7b7d4b9',
             'Прекращение, приостановка, приобщение документов по ранее принятому делу (недвижимость)': '14ea190f-e597-4c68-a77a-a697d826101b',
             'Опека (дача разрешения на сделки с недвижимостью для несовершеннолетних)': '99def219-6ee8-47e4-9508-b77b2042a332',
-            'Паспорт, прописка': '78402a5a-321b-4213-a081-a32a29c0317d',
+            'Паспорт': '78402a5a-321b-4213-a081-a32a29c0317d',
+            'Прописка': 'd0ec6424-bfdf-492d-888b-76b9060726b4',
             'Субсидии, льготы, компенсации, пенсии': 'c155b875-cd2c-4dc9-95a4-bd68ff0d4f1b',
             'Справки УМВД и Пенсионного фонда (справки о несудимости, выписки ИЛС, справки о размере пенсии и другие)': '93e9047a-b55f-4d43-b10d-554f5bd3c080',
             'Распоряжение средствами материнского капитала': 'dfa9a351-dc67-42da-b33c-e1fa5da95b90',
@@ -289,6 +290,11 @@ services = {
             'Выдача сертификатов на газификацию жилого помещения': 'ae063235-ef12-4166-922b-78e307060c5d',
             'Онлайн консультация с нотариусом': '4b7b705a-8b12-4f07-b26f-d573e6f096c2'
         }
+
+host="172.18.11.104"
+user="root"
+password="enigma1418"
+db="mdtomskbot"
 
 class base:
     def __init__(self, user_id = None, filial = None, fio = None, tel = None, usluga = None, time = None, date = None, fields = None, \
@@ -665,18 +671,33 @@ class base:
             response = requests.get(status_url, timeout=(2, 5))
             response.encoding = 'utf-8'
             xstatus = response.json()
-            if xstatus["requesters"][0]["lastName"] != None:
-                fam = xstatus["requesters"][0]["lastName"].replace(' ', '')
-            else:
-                fam = ''
-            if xstatus["requesters"][0]["lastName"] != None:
-                name = xstatus["requesters"][0]["firstName"].replace(' ', '')
-            else:
-                name = ''
-            if xstatus["requesters"][0]["patronymic"] != None:
-                otch = xstatus["requesters"][0]["patronymic"].replace(' ', '')
-            else:
-                otch = ''
+
+            # if xstatus["requesters"][0]["lastName"] != None:
+            #     fam = xstatus["requesters"][0]["lastName"].replace(' ', '')
+            # else:
+            #     fam = ''
+            # if xstatus["requesters"][0]["firstName"] != None:
+            #     name = xstatus["requesters"][0]["firstName"].replace(' ', '')
+            # else:
+            #     name = ''
+            # if xstatus["requesters"][0]["patronymic"] != None:
+            #     otch = xstatus["requesters"][0]["patronymic"].replace(' ', '')
+            # else:
+            #     otch = ''
+
+            fam = ''
+            name = ''
+            otch = ''
+
+            # Проверяем, есть ли ключ 'requesters', и что это непустой список
+            if "requesters" in xstatus and isinstance(xstatus["requesters"], list) and xstatus["requesters"]:
+                requester = xstatus["requesters"][0]  # Берём первого заявителя
+
+                # Извлекаем данные безопасно с помощью .get()
+                fam = requester.get("lastName", "").replace(' ', '') if requester.get("lastName") else ''
+                name = requester.get("firstName", "").replace(' ', '') if requester.get("firstName") else ''
+                otch = requester.get("patronymic", "").replace(' ', '') if requester.get("patronymic") else ''
+
             if isinstance(xstatus, dict):
                 if xstatus.get("success", False):
                     caseStatus = xstatus["order"]["status"]
@@ -850,10 +871,10 @@ class base:
 
         try:
             pool = await aiomysql.create_pool(
-                host="172.18.11.103",
-                user="root",
-                password="enigma1418",
-                db="mdtomskbot",
+                host=host,
+                user=user,
+                password=password,
+                db=db,
                 connect_timeout=2
             )
             async with pool.acquire() as conn:
@@ -1111,10 +1132,10 @@ class base:
 
 
                 pool = await aiomysql.create_pool(
-                    host="172.18.11.103",
-                    user="root",
-                    password="enigma1418",
-                    db="mdtomskbot",
+                    host=host,
+                    user=user,
+                    password=password,
+                    db=db,
                     autocommit=False,
                     connect_timeout=2
                 )
@@ -1168,10 +1189,10 @@ class base:
     async def phone_select(self):
         try:
             pool = await aiomysql.create_pool(
-                host="172.18.11.103",
-                user="root",
-                password="enigma1418",
-                db="mdtomskbot",
+                host=host,
+                user=user,
+                password=password,
+                db=db,
                 autocommit=True,
                 connect_timeout=2
             )
@@ -1205,10 +1226,10 @@ class base:
 
         try:
             pool = await aiomysql.create_pool(
-                host="172.18.11.103",
-                user="root",
-                password="enigma1418",
-                db="mdtomskbot",
+                host=host,
+                user=user,
+                password=password,
+                db=db,
                 autocommit=True,
                 connect_timeout=2
             )
@@ -1241,10 +1262,10 @@ class base:
     async def phone_input(self):
         try:
             pool = await aiomysql.create_pool(
-                host="172.18.11.103",
-                user="root",
-                password="enigma1418",
-                db="mdtomskbot",
+                host=host,
+                user=user,
+                password=password,
+                db=db,
                 autocommit=True,
                 connect_timeout=2
             )
@@ -1289,10 +1310,10 @@ class base:
 
         try:
             pool = await aiomysql.create_pool(
-                host="172.18.11.103",
-                user="root",
-                password="enigma1418",
-                db="mdtomskbot",
+                host=host,
+                user=user,
+                password=password,
+                db=db,
                 autocommit=True,
                 connect_timeout=2
             )
@@ -1342,10 +1363,10 @@ class base:
 
             # Подключаемся к базе данных
             pool = await aiomysql.create_pool(
-                host="172.18.11.103",
-                user="root",
-                password="enigma1418",
-                db="mdtomskbot",
+                host=host,
+                user=user,
+                password=password,
+                db=db,
                 autocommit=True,
                 connect_timeout=2
             )
@@ -1395,10 +1416,10 @@ class base:
             time = new_time_obj.strftime("%H:%M:%S")
 
             pool = await aiomysql.create_pool(
-                host="172.18.11.103",
-                user="root",
-                password="enigma1418",
-                db="mdtomskbot",
+                host=host,
+                user=user,
+                password=password,
+                db=db,
                 autocommit=True,
                 connect_timeout=2
             )
@@ -1429,10 +1450,10 @@ class base:
             time = new_time_obj.strftime("%H:%M:%S")
 
             pool = await aiomysql.create_pool(
-                host="172.18.11.103",
-                user="root",
-                password="enigma1418",
-                db="mdtomskbot",
+                host=host,
+                user=user,
+                password=password,
+                db=db,
                 autocommit=True,
                 connect_timeout=2
             )
@@ -1463,10 +1484,10 @@ class base:
             time = new_time_obj.strftime("%H:%M:%S")
 
             pool = await aiomysql.create_pool(
-                host="172.18.11.103",
-                user="root",
-                password="enigma1418",
-                db="mdtomskbot",
+                host=host,
+                user=user,
+                password=password,
+                db=db,
                 autocommit=True,
                 connect_timeout=2
             )
@@ -1491,10 +1512,10 @@ class base:
 
         try:
             pool = await aiomysql.create_pool(
-                host="172.18.11.103",
-                user="root",
-                password="enigma1418",
-                db="mdtomskbot",
+                host=host,
+                user=user,
+                password=password,
+                db=db,
                 autocommit=True,
                 connect_timeout=2
             )
@@ -1521,10 +1542,10 @@ class base:
             date = str(datetime.datetime.now().date())
 
             pool = await aiomysql.create_pool(
-                host="172.18.11.103",
-                user="root",
-                password="enigma1418",
-                db="mdtomskbot",
+                host=host,
+                user=user,
+                password=password,
+                db=db,
                 autocommit=True,
                 connect_timeout=2
             )
@@ -1555,10 +1576,10 @@ class base:
             time = new_time_obj.strftime("%H:%M:%S")
 
             pool = await aiomysql.create_pool(
-                host="172.18.11.103",
-                user="root",
-                password="enigma1418",
-                db="mdtomskbot",
+                host=host,
+                user=user,
+                password=password,
+                db=db,
                 autocommit=True,
                 connect_timeout=2
             )
@@ -1589,10 +1610,10 @@ class base:
             time = new_time_obj.strftime("%H:%M:%S")
 
             pool = await aiomysql.create_pool(
-                host="172.18.11.103",
-                user="root",
-                password="enigma1418",
-                db="mdtomskbot",
+                host=host,
+                user=user,
+                password=password,
+                db=db,
                 autocommit=True,
                 connect_timeout=2
             )
@@ -1623,10 +1644,10 @@ class base:
             time = new_time_obj.strftime("%H:%M:%S")
 
             pool = await aiomysql.create_pool(
-                host="172.18.11.103",
-                user="root",
-                password="enigma1418",
-                db="mdtomskbot",
+                host=host,
+                user=user,
+                password=password,
+                db=db,
                 autocommit=True,
                 connect_timeout=2
             )
@@ -1657,10 +1678,10 @@ class base:
             time = new_time_obj.strftime("%H:%M:%S")
 
             pool = await aiomysql.create_pool(
-                host="172.18.11.103",
-                user="root",
-                password="enigma1418",
-                db="mdtomskbot",
+                host=host,
+                user=user,
+                password=password,
+                db=db,
                 autocommit=True,
                 connect_timeout=2
             )
@@ -1691,10 +1712,10 @@ class base:
             time = new_time_obj.strftime("%H:%M:%S")
 
             pool = await aiomysql.create_pool(
-                host="172.18.11.103",
-                user="root",
-                password="enigma1418",
-                db="mdtomskbot",
+                host=host,
+                user=user,
+                password=password,
+                db=db,
                 autocommit=True,
                 connect_timeout=2
             )
@@ -1725,10 +1746,10 @@ class base:
             time = new_time_obj.strftime("%H:%M:%S")
 
             pool = await aiomysql.create_pool(
-                host="172.18.11.103",
-                user="root",
-                password="enigma1418",
-                db="mdtomskbot",
+                host=host,
+                user=user,
+                password=password,
+                db=db,
                 autocommit=True,
                 connect_timeout=2
             )
@@ -1754,10 +1775,10 @@ class base:
             date = str(datetime.datetime.now().date())
 
             pool = await aiomysql.create_pool(
-                host="172.18.11.103",
-                user="root",
-                password="enigma1418",
-                db="mdtomskbot",
+                host=host,
+                user=user,
+                password=password,
+                db=db,
                 autocommit=True,
                 connect_timeout=2
             )
@@ -1779,10 +1800,10 @@ class base:
 
         try:
             pool = await aiomysql.create_pool(
-                host="172.18.11.103",
-                user="root",
-                password="enigma1418",
-                db="mdtomskbot",
+                host=host,
+                user=user,
+                password=password,
+                db=db,
                 autocommit=True,
                 connect_timeout=2
             )
@@ -1970,10 +1991,10 @@ class base:
                     time_new = new_time_obj.strftime("%H:%M:%S")
 
                     pool = await aiomysql.create_pool(
-                        host="172.18.11.103",
-                        user="root",
-                        password="enigma1418",
-                        db="mdtomskbot",
+                        host=host,
+                        user=user,
+                        password=password,
+                        db=db,
                         autocommit=True,
                         connect_timeout=2
                     )
@@ -2042,10 +2063,10 @@ class base:
             date_formatted = date_now.strftime('%Y-%m-%d')
 
             pool = await aiomysql.create_pool(
-                host="172.18.11.103",
-                user="root",
-                password="enigma1418",
-                db="mdtomskbot",
+                host=host,
+                user=user,
+                password=password,
+                db=db,
                 autocommit=True,
                 connect_timeout=2
             )
@@ -2075,10 +2096,10 @@ class base:
             date_formatted = date_now.strftime('%Y-%m-%d')
 
             pool = await aiomysql.create_pool(
-                host="172.18.11.103",
-                user="root",
-                password="enigma1418",
-                db="mdtomskbot",
+                host=host,
+                user=user,
+                password=password,
+                db=db,
                 autocommit=True,
                 connect_timeout=2
             )
@@ -2088,6 +2109,49 @@ class base:
                     await cursor.execute(
                         f"DELETE FROM vkontakte_reg WHERE sender = '{str(self.user_id)}' AND date = '{str(date_formatted)}' AND talon = '{talon}' AND department = '{department}';"
                     )
+            return
+        except Exception as e:
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
+
+    async def support_message(user_id, message):
+
+        mfc_id = 'oprgp.toma'
+        message = str(message.text) + '_' + 'Цена'
+
+        try:
+
+            pool = await aiomysql.create_pool(
+                host=host,
+                user=user,
+                password=password,
+                db=db,
+                autocommit=True,
+                connect_timeout=2
+            )
+            async with pool.acquire() as conn:
+                async with conn.cursor() as cursor:
+                    await conn.begin()
+
+                    sql_check = f"SELECT ani FROM notification WHERE id_vk = %s"
+                    await cursor.execute(sql_check, user_id)
+                    result = await cursor.fetchone()
+
+                    if not result == []:
+                        phone = result[0]
+                    else:
+                        phone = 'no_phone'
+
+                    await cursor.execute(
+                        "INSERT INTO file_id_tb (id_tb, marker, message, phone) VALUES (%s, %s, %s, %s);",
+                        (int(user_id), 'yes', message, str(phone) + ', ' + str(mfc_id))
+                    )
+
+                    await conn.commit()
             return
         except Exception as e:
             # Вывод подробной информации об ошибке

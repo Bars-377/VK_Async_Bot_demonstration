@@ -5,6 +5,11 @@ from email.message import EmailMessage
 import time
 import os
 
+host="172.18.11.104"
+user="root"
+password="enigma1418"
+database="mdtomskbot"
+
 def treatment_p(id, fio, contacts,type_service, service, date, category):
 
     if category == None:
@@ -90,8 +95,14 @@ def treatment_p(id, fio, contacts,type_service, service, date, category):
     paragraph = doc.add_paragraph("* - заполняется при выездном обслуживании льготных категорий граждан")
     paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
 
-    # Сохраните документ
-    modified_attachment_path = "C:\\Users\\admin\\Desktop\\mail\\zayavka_" + str(id) + ".docx"
+    # # Сохраните документ
+    # modified_attachment_path = "C:\\Users\\admin\\Desktop\\mail\\zayavka_" + str(id) + ".docx"
+
+    # Получаем текущую директорию проекта
+    project_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Строим путь к папке file внутри проекта
+    modified_attachment_path = os.path.join(project_dir, 'mail', f'zayavka_{str(id)}.docx')
 
     doc.save(modified_attachment_path)
 
@@ -101,8 +112,8 @@ def treatment_p(id, fio, contacts,type_service, service, date, category):
     smtp_server = "smtp.mfc.tomsk.ru"
     # smtp_server = "smtp.yandex.ru"
     smtp_port = 587  # Порт для TLS
-    sender_email_address = "neverov@mfc.tomsk.ru"
-    sender_password = "85HtnPdj"  # Убедитесь, что это пароль приложения
+    sender_email_address = "oprgp.toma@mfc.tomsk.ru"
+    sender_password = "94NotYjc"  # Убедитесь, что это пароль приложения
     # sender_email_address = "m.tosp@yandex.ru"
     # sender_password = "cwlecvijmxlpkvfo"  # Убедитесь, что это пароль приложения
 
@@ -115,8 +126,15 @@ def treatment_p(id, fio, contacts,type_service, service, date, category):
     # Установите текстовое содержимое письма
     message.set_content(f"Заявка на платную у слугу от {fio}")
 
-    # Прикрепите файл Excel к письму
-    attachment_path = "C:\\Users\\admin\\Desktop\\mail\\zayavka_" + str(id) + ".docx"
+    # # Прикрепите файл Excel к письму
+    # attachment_path = "C:\\Users\\admin\\Desktop\\mail\\zayavka_" + str(id) + ".docx"
+
+    # Получаем текущую директорию проекта
+    project_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Строим путь к папке file внутри проекта
+    attachment_path = os.path.join(project_dir, 'mail', f'zayavka_{str(id)}.docx')
+
     with open(attachment_path, "rb") as attachment:
         message.add_attachment(attachment.read(), maintype="application", subtype="vnd.openxmlformats-officedocument.wordprocessingml.document", filename=os.path.basename(attachment_path))
 
@@ -162,10 +180,10 @@ def process_mail():
 
     # Создание одиночного соединения
     dbconfig = {
-        'host': "172.18.11.103",
-        'user': "root",
-        'password': "enigma1418",
-        'database': "mdtomskbot",
+        'host': host,
+        'user': user,
+        'password': password,
+        'database': database,
     }
 
     connection = mysql.connector.connect(**dbconfig)
@@ -207,7 +225,7 @@ def process_file():
     #     from email import encoders
 
     #     # Путь к папке, где находятся файлы
-    #     folder_path = "C:\\Users\\admin\\Desktop\\file"
+    #     folder_path = "C:\\Users\\neverov\\Desktop\\file"
 
     #     # Функция для поиска первого файла, содержащего "info" в имени
     #     def find_file_with_info(folder):
@@ -466,10 +484,10 @@ def process_file():
         import mysql.connector
         try:
             mydb = mysql.connector.connect(
-                host="172.18.11.103",
-                user="root",
-                password="enigma1418",
-                database="mdtomskbot",
+                host=host,
+                user=user,
+                password=password,
+                database=database,
                 connect_timeout=2
             )
             mycursor = mydb.cursor()
@@ -484,20 +502,27 @@ def process_file():
             if not result:
                 return None, None
 
+            if result[0] == '':
+                return None, None
+            elif result[1] == '':
+                return None, None
+            elif result[0] == '' and result[1] == '':
+                return None, None
+
             # Возвращаем результат
             return result[0], result[1]
         except Exception as e:
-            print('search_in_base:', e)
-            return {"code": "no"}
+            print('search_user_id:', e)
+            return None, None
 
     def search_files(user_id):
         import mysql.connector
         try:
             mydb = mysql.connector.connect(
-                host="172.18.11.103",
-                user="root",
-                password="enigma1418",
-                database="mdtomskbot",
+                host=host,
+                user=user,
+                password=password,
+                database=database,
                 connect_timeout=2
             )
             mycursor = mydb.cursor()
@@ -513,17 +538,17 @@ def process_file():
             return result if result else None
 
         except Exception as e:
-            print('search_in_base:', e)
-            return {"code": "no"}
+            print('search_files:', e)
+            return None
 
     def search_message(user_id):
         import mysql.connector
         try:
             mydb = mysql.connector.connect(
-                host="172.18.11.103",
-                user="root",
-                password="enigma1418",
-                database="mdtomskbot",
+                host=host,
+                user=user,
+                password=password,
+                database=database,
                 connect_timeout=2
             )
             mycursor = mydb.cursor()
@@ -538,17 +563,17 @@ def process_file():
             return result[0][0] if result else None
 
         except Exception as e:
-            print('search_in_base:', e)
-            return {"code": "no"}
+            print('search_message:', e)
+            return None
 
     def delete_files(user_id):
         import mysql.connector
         try:
             mydb = mysql.connector.connect(
-                host="172.18.11.103",
-                user="root",
-                password="enigma1418",
-                database="mdtomskbot",
+                host=host,
+                user=user,
+                password=password,
+                database=database,
                 connect_timeout=2
             )
             mycursor = mydb.cursor()
@@ -563,8 +588,8 @@ def process_file():
             return
 
         except Exception as e:
-            print('search_in_base:', e)
-            return {"code": "no"}
+            print('delete_files:', e)
+            return
 
     def send_files():
         # while True:
@@ -574,75 +599,91 @@ def process_file():
             if user_id and phone:
                 files = search_files(user_id)
 
+                # # Создаем папку "321", если она не существует
+                # save_directory = "C:\\Users\\admin\\Desktop\\file"
+
+                # Получаем текущую директорию проекта
+                project_dir = os.path.dirname(os.path.abspath(__file__))
+
+                # Строим путь к папке file внутри проекта
+                save_directory = os.path.join(project_dir, 'file')
+
                 if files:
                     for file in files:
 
-                        file_name = f'{file[2]}_{user_id}.{file[1]}'
+                        if file[0] and file[1] and file[2]:
 
-                        # elif "photo" in message:
-                        #     # Выбираем последнее (самое большое) фото
-                        #     largest_photo = message["photo"][-1]
-                        #     file_id = largest_photo["file_id"]
-                        #     file_name = f"{file_id}.jpg"
-                        #     print(f"file_id фотографии: {file_id}")
+                            file_name = f'{file[2]}_{user_id}.{file[1]}'
 
-                        # elif "video" in message:
-                        #     file_id = message["video"]["file_id"]
-                        #     file_name = f"{file_id}.mp4"
-                        #     print(f"file_id видео: {file_id}")
+                            # elif "photo" in message:
+                            #     # Выбираем последнее (самое большое) фото
+                            #     largest_photo = message["photo"][-1]
+                            #     file_id = largest_photo["file_id"]
+                            #     file_name = f"{file_id}.jpg"
+                            #     print(f"file_id фотографии: {file_id}")
 
-                        # Получаем путь к файлу
-                        file_info_url = f"https://api.telegram.org/bot{TOKEN}/getFile?file_id={file[0]}"
-                        file_info_response = requests.get(file_info_url)
-                        file_info = file_info_response.json()
+                            # elif "video" in message:
+                            #     file_id = message["video"]["file_id"]
+                            #     file_name = f"{file_id}.mp4"
+                            #     print(f"file_id видео: {file_id}")
 
-                        if file_info.get("ok"):
-                            file_path = file_info['result']['file_path']
+                            # Получаем путь к файлу
+                            file_info_url = f"https://api.telegram.org/bot{TOKEN}/getFile?file_id={file[0]}"
+                            file_info_response = requests.get(file_info_url)
+                            file_info = file_info_response.json()
 
-                            # Формируем URL для загрузки файла
-                            file_url = f"https://api.telegram.org/file/bot{TOKEN}/{file_path}"
+                            if file_info.get("ok"):
+                                file_path = file_info['result']['file_path']
 
-                            # Загружаем файл
-                            file_response = requests.get(file_url)
+                                # Формируем URL для загрузки файла
+                                file_url = f"https://api.telegram.org/file/bot{TOKEN}/{file_path}"
 
-                            # Создаем папку "321", если она не существует
-                            save_directory = "C:\\Users\\admin\\Desktop\\file"
-                            os.makedirs(save_directory, exist_ok=True)
+                                # Загружаем файл
+                                file_response = requests.get(file_url)
 
-                            # Сохраняем файл локально в папке "321"
-                            save_path = os.path.join(save_directory, file_name)
-                            with open(save_path, "wb") as f:
-                                f.write(file_response.content)
+                                os.makedirs(save_directory, exist_ok=True)
 
-                            print(f"Файл сохранен по пути: {save_path}")
-                        else:
-                            print("Ошибка при получении пути к файлу:", file_info)
+                                # Сохраняем файл локально в папке "321"
+                                save_path = os.path.join(save_directory, file_name)
+                                with open(save_path, "wb") as f:
+                                    f.write(file_response.content)
 
-                    message = search_message(user_id)
-                    # Разбиваем строку по символу "_"
-                    if message:
-                        split_text = message.split('_')
-                        # Соединяем элементы попарно с ": "
-                        result = [f"{split_text[i]} {split_text[i+1]}" for i in range(0, len(split_text)-1, 2)]
-                        # print(result)
-                        result.append(phone)
-                        result = ', '.join(result)
+                                print(f"Файл сохранен по пути: {save_path}")
 
-                        file_path = os.path.join(save_directory, f'info_{user_id}.txt')  # Путь к файлу
+                            else:
+                                print("Ошибка при получении пути к файлу:", file_info)
 
-                        # Записываем file_path в файл
-                        with open(file_path, 'w') as file:
-                            file.write(result)
+                message = search_message(user_id)
+                # Разбиваем строку по символу "_"
+                if message:
+                    split_text = message.split('_')
+                    # Соединяем элементы попарно с ": "
+                    result = [f"{split_text[i]} {split_text[i+1]}" for i in range(0, len(split_text)-1, 2)]
+                    # print(result)
+                    result.append(phone)
+                    result = ', '.join(result)
 
-                    delete_files(user_id)
+                    file_path = os.path.join(save_directory, f'info_{user_id}.txt')  # Путь к файлу
+
+                    # Записываем file_path в файл
+                    with open(file_path, 'w') as file:
+                        file.write(result)
+
+                delete_files(user_id)
 
             import smtplib
             import time
             from email.mime.base import MIMEBase
             from email import encoders
 
-            # Путь к папке, где находятся файлы
-            folder_path = "C:\\Users\\admin\\Desktop\\file"
+            # # Путь к папке, где находятся файлы
+            # folder_path = "C:\\Users\\admin\\Desktop\\file"
+
+            # Получаем текущую директорию проекта
+            project_dir = os.path.dirname(os.path.abspath(__file__))
+
+            # Строим путь к папке file внутри проекта
+            folder_path = os.path.join(project_dir, 'file')
 
             # Функция для поиска первого файла, содержащего "info" в имени
             def find_file_with_info(folder):
@@ -677,12 +718,12 @@ def process_file():
                     search_strings.append(file.split("\\")[-1].split('.')[0] if "_" in file else None)
                 return search_strings if search_strings else None
 
-            # Функция для поиска первого файла, не содержащего "info" в имени
+            # Функция для поиска первого файла
             def get_files_in_folder(folder,user_id):
                 found_files = []
                 files = os.listdir(folder)
                 for filename in files:
-                    if not "info" in filename and user_id in filename:
+                    if user_id in filename:
                         found_files.append(os.path.join(folder, filename))
                 return found_files if found_files else None
 
@@ -714,25 +755,144 @@ def process_file():
             # Найдите файл, содержащий search_string
             modified_attachment_path = find_file_in_folder(folder_path, search_strings)
 
-            if not modified_attachment_path:
+            # if not modified_attachment_path:
                 # print(f"Файл, содержащий '{search_strings}' в имени, не найден.")
-                return
+                # return
 
             # Настройки почтового сервера
             smtp_server = "smtp.mfc.tomsk.ru"
             smtp_port = 587  # Порт для TLS
-            sender_email_address = "neverov@mfc.tomsk.ru"
-            sender_password = "85HtnPdj"  # Убедитесь, что это пароль приложения
+            sender_email_address = "oprgp.toma@mfc.tomsk.ru"
+            sender_password = "94NotYjc"  # Убедитесь, что это пароль приложения
 
             from email.mime.multipart import MIMEMultipart
 
             # Создайте сообщение электронной почты
             # message = EmailMessage()
             message = MIMEMultipart()
-            message["Subject"] = f"Документы на составление договора от {file_text.split(',')[-1]}"
+            message["Subject"] = f"Документы на составление договора от {file_text.split(',')[-2]}"
             message["From"] = sender_email_address
             # message["To"] = 'msptosp@mfc.tomsk.ru'  # Адрес получателя
-            message["To"] = 'gulyaeva@mfc.tomsk.ru'  # Адрес получателя
+
+            filials_id = {
+                        '533': 'kirovskiy@mfc.tomsk.ru',
+                        '461': 'leninskiy@mfc.tomsk.ru',
+                        '641': 'oktyabrskiy@mfc.tomsk.ru',
+                        '689': 'sovetskiy@mfc.tomsk.ru',
+                        '431': 'zatoseversk@mfc.tomsk.ru',
+                        # '425': 'gulyaeva@mfc.tomsk.ru',
+                        # '665': 'msptosp@mfc.tomsk.ru',
+                        # '377': 'msptosp@mfc.tomsk.ru',
+                        # '557': 'msptosp@mfc.tomsk.ru',
+                        # '389': 'msptosp@mfc.tomsk.ru',
+                        # '449': 'msptosp@mfc.tomsk.ru',
+                        # '677': 'msptosp@mfc.tomsk.ru',
+                        # '605': 'msptosp@mfc.tomsk.ru',
+                        '443': 'msptosp@mfc.tomsk.ru',
+                        # '719': 'msptosp@mfc.tomsk.ru',
+                        # '659': 'msptosp@mfc.tomsk.ru',
+                        '479': 'msptosp@mfc.tomsk.ru',
+                        # '713': 'msptosp@mfc.tomsk.ru',
+                        '731': 'msptosp@mfc.tomsk.ru',
+                        '551': 'msptosp@mfc.tomsk.ru',
+                        # '407': 'msptosp@mfc.tomsk.ru',
+                        '725': 'msptosp@mfc.tomsk.ru',
+                        # '467': 'msptosp@mfc.tomsk.ru',
+                        # '623': 'msptosp@mfc.tomsk.ru',
+                        # '347': 'msptosp@mfc.tomsk.ru',
+                        # '545': 'msptosp@mfc.tomsk.ru',
+                        # '635': 'msptosp@mfc.tomsk.ru',
+                        # '455': 'msptosp@mfc.tomsk.ru',
+                        '395': 'msptosp@mfc.tomsk.ru',
+                        '491': 'msptosp@mfc.tomsk.ru',
+                        '371': 'msptosp@mfc.tomsk.ru',
+                        # '611': 'msptosp@mfc.tomsk.ru',
+                        # '593': 'msptosp@mfc.tomsk.ru',
+                        # '503': 'msptosp@mfc.tomsk.ru',
+                        # '443': 'msptosp@mfc.tomsk.ru',
+                        '401': 'msptosp@mfc.tomsk.ru',
+                        # '629': 'msptosp@mfc.tomsk.ru',
+                        '539': 'msptosp@mfc.tomsk.ru',
+                        # '2894026': 'msptosp@mfc.tomsk.ru',
+                        # '719': 'msptosp@mfc.tomsk.ru',
+                        # '515': 'msptosp@mfc.tomsk.ru',
+                        '575': 'msptosp@mfc.tomsk.ru',
+                        '437': 'msptosp@mfc.tomsk.ru',
+                        # '647': 'msptosp@mfc.tomsk.ru',
+                        # '707': 'msptosp@mfc.tomsk.ru',
+                        # '479': 'msptosp@mfc.tomsk.ru',
+                        '383': 'msptosp@mfc.tomsk.ru',
+                        '329': 'msptosp@mfc.tomsk.ru',
+                        '419': 'msptosp@mfc.tomsk.ru',
+                        # '563': 'msptosp@mfc.tomsk.ru',
+                        '599': 'msptosp@mfc.tomsk.ru',
+                        # '335': 'msptosp@mfc.tomsk.ru',
+                        # '617': 'msptosp@mfc.tomsk.ru',
+                        # '497': 'msptosp@mfc.tomsk.ru',
+                        # '407': 'msptosp@mfc.tomsk.ru',
+                        # '413': 'msptosp@mfc.tomsk.ru',
+                        '527': 'msptosp@mfc.tomsk.ru',
+                        # '467': 'msptosp@mfc.tomsk.ru',
+                        '521': 'msptosp@mfc.tomsk.ru',
+                        # '653': 'msptosp@mfc.tomsk.ru',
+                        # '671': 'msptosp@mfc.tomsk.ru',
+                        # '473': 'msptosp@mfc.tomsk.ru',
+                        '623': 'msptosp@mfc.tomsk.ru',
+                        # '569': 'msptosp@mfc.tomsk.ru',
+                        # '485': 'msptosp@mfc.tomsk.ru',
+                        # '359': 'msptosp@mfc.tomsk.ru',
+                        # '347': 'msptosp@mfc.tomsk.ru',
+                        # '371': 'msptosp@mfc.tomsk.ru',
+                        # '342595': 'msptosp@mfc.tomsk.ru',
+                        '683': 'msptosp@mfc.tomsk.ru',
+                        # '449': 'msptosp@mfc.tomsk.ru',
+                        # '432256': 'msptosp@mfc.tomsk.ru',
+                        # '365': 'msptosp@mfc.tomsk.ru',
+                        # '695': 'msptosp@mfc.tomsk.ru',
+                        # '701': 'msptosp@mfc.tomsk.ru',
+                        '509': 'msptosp@mfc.tomsk.ru',
+                        # '432194': 'msptosp@mfc.tomsk.ru',
+                        # '432212': 'msptosp@mfc.tomsk.ru',
+                        # '432239': 'msptosp@mfc.tomsk.ru',
+                        'oprgp.toma': 'oprgp.toma@mfc.tomsk.ru'
+                    }
+
+            # message["To"] = 'gulyaeva@mfc.tomsk.ru'  # Адрес получателя
+            try:
+                message["To"] = filials_id[file_text.split(',')[-1].strip()]
+            except:
+                if modified_attachment_path:
+                    # Удалите документ после отправки
+                    for file in modified_attachment_path:
+                        os.remove(file)
+                os.remove(file_with_info)
+                return
+
+            if message["To"] == 'oprgp.toma@mfc.tomsk.ru':
+                message["Subject"] = f"Техподдержка от {file_text.split(',')[-2]}"
+
+            if 'Услуги СВО' in file_text:
+                message["Subject"] = f"Услуги СВО от {file_text.split(',')[-2]}"
+
+            file_text = file_text.split(',')
+
+            if message["To"] == 'oprgp.toma@mfc.tomsk.ru':
+                # Фильтрация массива: удаляем только слово "Цена", оставляя "Привет"
+                file_text = [item.replace("Цена", "").strip() for item in file_text]
+
+            if any('Услуги СВО' in item for item in file_text):
+                # Фильтрация массива: удаляем только слово "Цена", оставляя "Привет"
+                file_text = [item.replace("Цена", "").strip() for item in file_text]
+
+            file_text = file_text[:-1] # Удаляем последний элемент
+
+            if message["To"] == 'oprgp.toma@mfc.tomsk.ru':
+                file_text = file_text[:-1] # Удаляем последний элемент
+
+            if any('Услуги СВО' in item for item in file_text):
+                file_text = file_text[:-1] # Удаляем последний элемент
+
+            file_text = ','.join(file_text)
 
             # Установите текстовое содержимое письма
             # message.set_content(file_text)
@@ -757,7 +917,8 @@ def process_file():
                         part.add_header('Content-Disposition', 'attachment', filename=os.path.basename(file))
                         message.attach(part)
 
-            attach_file(message, modified_attachment_path)
+            if modified_attachment_path:
+                attach_file(message, modified_attachment_path)
 
             # Функция для отправки письма
             def send_email():
@@ -768,11 +929,12 @@ def process_file():
                         server.starttls()  # Инициализация TLS
                         server.login(sender_email_address, sender_password)
                         server.send_message(message)  # Отправьте сообщение
-                    print("Письмо успешно отправлено.")
+                    print(f"Письмо успешно отправлено на {message["To"]}.")
 
-                    # Удалите документ после отправки
-                    for file in modified_attachment_path:
-                        os.remove(file)
+                    if modified_attachment_path:
+                        # Удалите документ после отправки
+                        for file in modified_attachment_path:
+                            os.remove(file)
                     os.remove(file_with_info)
 
                     condition = True

@@ -149,6 +149,10 @@ class buttons:
 
     async def services_paid(department):
         try:
+            change_service = ('509', '395', '491', '443', '401',
+            '539', '575', '437', '479', '383',
+            '329', '419', '713', '731', '725',
+            '521', '551', '623', '527', '371')
             keyboard = Keyboard(one_time=True, inline=False)
             keyboard.add(Text("Налоговые декларации", {"cmd": "deklar"}), color=KeyboardButtonColor.POSITIVE)
             keyboard.row()
@@ -164,9 +168,58 @@ class buttons:
                 or department == "683"
                 or department == "342595"
             ):
-                keyboard.add(Text("Банкротство ФЛ", {"cmd": "bankr"}), color=KeyboardButtonColor.POSITIVE)
-                keyboard.row()
+                if department in change_service:
+                    keyboard.add(Text("Банкротство ТОСП", {"cmd": "bankr_tosp"}), color=KeyboardButtonColor.POSITIVE)
+                    keyboard.row()
+                else:
+                    keyboard.add(Text("Банкротство ФЛ", {"cmd": "bankr"}), color=KeyboardButtonColor.POSITIVE)
+                    keyboard.row()
             keyboard.add(Text("Назад", {"cmd": "back"}), color=KeyboardButtonColor.NEGATIVE)
+            keyboard.row()
+            keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
+            keyboard = keyboard.get_json()
+            return keyboard
+        except Exception as e:
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
+
+    async def compilation(*args):
+        try:
+            try:
+                arg = (args,)[0][0]
+            except:
+                arg = ''
+            keyboard = Keyboard(one_time=True, inline=False)
+            keyboard.add(Text("Узнать перечень документов", {"cmd": "per_doc"}), color=KeyboardButtonColor.POSITIVE)
+            keyboard.row()
+            if arg != 'no':
+                keyboard.add(Text("Записаться на приём", {"cmd": "zap_pri"}), color=KeyboardButtonColor.POSITIVE)
+                keyboard.row()
+            keyboard.add(Text("Отправить информацию", {"cmd": "otpr_inf"}), color=KeyboardButtonColor.POSITIVE)
+            keyboard.row()
+            keyboard.add(Text("Назад", {"cmd": "back_1"}), color=KeyboardButtonColor.NEGATIVE)
+            keyboard.row()
+            keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
+            keyboard = keyboard.get_json()
+            return keyboard
+        except Exception as e:
+            # Вывод подробной информации об ошибке
+            print(f"Поймано исключение: {type(e).__name__}")
+            print(f"Сообщение об ошибке: {str(e)}")
+            import traceback
+            print("Трассировка стека (stack trace):")
+            traceback.print_exc()
+
+    async def compilation_1(*args):
+        try:
+            keyboard = Keyboard(one_time=True, inline=False)
+            keyboard.add(Text("Отправить документы", {"cmd": "otpr_inf"}), color=KeyboardButtonColor.POSITIVE)
+            keyboard.row()
+            keyboard.add(Text("Назад", {"cmd": "back_compilation"}), color=KeyboardButtonColor.NEGATIVE)
             keyboard.row()
             keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
             keyboard = keyboard.get_json()
@@ -181,18 +234,32 @@ class buttons:
 
     async def services_social(*args):
         try:
+            change_service = ('509', '395', '491', '443', '401',
+                        '539', '575', '437', '479', '383',
+                        '329', '419', '713', '731', '725',
+                        '521', '551', '623', '527', '371')
             arg = (args,)[0][0]
             keyboard = Keyboard(one_time=True, inline=False)
-            keyboard.add(Text("Паспорт", {"cmd": "passport"}), color=KeyboardButtonColor.POSITIVE)
-            keyboard.add(Text("Прописка", {"cmd": "residency"}), color=KeyboardButtonColor.POSITIVE)
+            if arg in change_service:
+                keyboard.add(Text("Паспорт, прописка ТОСП", {"cmd": "passport_tosp"}), color=KeyboardButtonColor.POSITIVE)
+                keyboard.row()
+            else:
+                keyboard.add(Text("Паспорт РФ", {"cmd": "passport"}), color=KeyboardButtonColor.POSITIVE)
+                keyboard.row()
+            keyboard.add(Text("Регистрация ПМЖ / пребыванию", {"cmd": "residency"}), color=KeyboardButtonColor.POSITIVE)
+            keyboard.add(Text("Регистрация  для иностранных граждан", {"cmd": "residency_in"}), color=KeyboardButtonColor.POSITIVE)
             keyboard.row()
-            keyboard.add(Text("ИНН, СНИЛС, ОМС", {"cmd": "snils"}), color=KeyboardButtonColor.POSITIVE)
+            if arg in change_service:
+                keyboard.add(Text("ИНН, СНИЛС, ОМС", {"cmd": "snils_tosp"}), color=KeyboardButtonColor.POSITIVE)
+            else:
+                keyboard.add(Text("ИНН, СНИЛС, ОМС", {"cmd": "snils"}), color=KeyboardButtonColor.POSITIVE)
+            keyboard.add(Text("ЖКУ, субсидии", {"cmd": "lgot"}), color=KeyboardButtonColor.POSITIVE)
             keyboard.row()
-            keyboard.add(Text("Субсидии, льготы, пенсии", {"cmd": "lgot"}), color=KeyboardButtonColor.POSITIVE)
-            keyboard.row()
+            keyboard.add(Text("Газификация", {"cmd": "gazif"}), color=KeyboardButtonColor.POSITIVE)
             keyboard.add(Text("Справки УМВД и СФР", {"cmd": "sprav"}), color=KeyboardButtonColor.POSITIVE)
             keyboard.row()
             keyboard.add(Text("Распоряжение мат. кап.", {"cmd": "smk"}), color=KeyboardButtonColor.POSITIVE)
+            keyboard.add(Text("Социальные выплаты, пенсии", {"cmd": "lgot_1"}), color=KeyboardButtonColor.POSITIVE)
             keyboard.row()
             if not arg == '12345':
                 keyboard.add(Text("Загранпаспорт", {"cmd": "zagran"}), color=KeyboardButtonColor.POSITIVE)
@@ -200,13 +267,14 @@ class buttons:
             if arg == '12345':
                 keyboard.add(Text("Загранпаспорт (5 лет)", {"cmd": "zagran_5"}), color=KeyboardButtonColor.POSITIVE)
                 keyboard.row()
-            if arg == '12345':
+            keyboard.add(Text("Справки СВО", {'cmd': 'sprav_svo'}), color=KeyboardButtonColor.POSITIVE)
+            keyboard.row()
+            if arg in change_service:
+                keyboard.add(Text("Детские пособия, путёвки ТОСП", {'cmd': 'posob_tosp'}), color=KeyboardButtonColor.POSITIVE)
+                keyboard.row()
+            else:
                 keyboard.add(Text("Детские пособия, путёвки", {'cmd': 'posob'}), color=KeyboardButtonColor.POSITIVE)
                 keyboard.row()
-            # keyboard.add(Text("Ежемес. выпл. на ребёнка", {'cmd': 'viplata'}), color=KeyboardButtonColor.POSITIVE)
-            # keyboard.row()
-            keyboard.add(Text("Газификация", {"cmd": "gazif"}), color=KeyboardButtonColor.POSITIVE)
-            keyboard.row()
             keyboard.add(Text("Назад", {"cmd": "back"}), color=KeyboardButtonColor.NEGATIVE)
             keyboard.row()
             keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
@@ -222,9 +290,17 @@ class buttons:
 
     async def services_other(department):
         try:
+            change_service = ('509', '395', '491', '443', '401',
+            '539', '575', '437', '479', '383',
+            '329', '419', '713', '731', '725',
+            '521', '551', '623', '527', '371')
             keyboard = Keyboard(one_time=True, inline=False)
-            keyboard.add(Text("Портал Госуслуги", {"cmd": "gosusl"}), color=KeyboardButtonColor.POSITIVE)
-            keyboard.row()
+            if department in change_service:
+                keyboard.add(Text("Госуслуги ТОСП", {"cmd": "gosusl_tosp"}), color=KeyboardButtonColor.POSITIVE)
+                keyboard.row()
+            else:
+                keyboard.add(Text("Портал Госуслуги", {"cmd": "gosusl"}), color=KeyboardButtonColor.POSITIVE)
+                keyboard.row()
             if not department == '12345':
                 keyboard.add(Text("Услуги ИП", {"cmd": "predprin"}), color=KeyboardButtonColor.POSITIVE)
                 keyboard.row()
@@ -238,8 +314,12 @@ class buttons:
                 and department != "683"
                 and department != "342595"
             ):
-                keyboard.add(Text("Банкротство ФЛ", {"cmd": "bankr"}), color=KeyboardButtonColor.POSITIVE)
-                keyboard.row()
+                if department in change_service:
+                    keyboard.add(Text("Банкротство ТОСП", {"cmd": "bankr_tosp"}), color=KeyboardButtonColor.POSITIVE)
+                    keyboard.row()
+                else:
+                    keyboard.add(Text("Банкротство ФЛ", {"cmd": "bankr"}), color=KeyboardButtonColor.POSITIVE)
+                    keyboard.row()
             keyboard.add(Text("Назад", {"cmd": "back_1"}), color=KeyboardButtonColor.NEGATIVE)
             keyboard.row()
             keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
@@ -270,7 +350,7 @@ class buttons:
             if not times[1]["data"]:
                 keyboard.add(Text("В главное меню", {"cmd": "menu"}), color=KeyboardButtonColor.PRIMARY)
                 keyboard = keyboard.get_json()
-                return keyboard
+                return keyboard, times[1]["data"]
 
             row = False
 
@@ -977,6 +1057,16 @@ class buttons:
                                 "link": "https://vk.com/im?media=&sel=-211348794"
                             }
                         }
+                    ],
+                    [
+                        {
+                            "action": {
+                                "type": "text",
+                                "label": "Техподдержка",
+                                "payload": "{\"cmd\": \"support\"}"
+                            },
+                            "color": "primary"
+                        }
                     ]
                 ]
             }
@@ -1303,6 +1393,18 @@ class buttons:
     async def menu_menu_file(*args):
         try:
             keyboard = Keyboard(one_time=True, inline=False)
+
+            try:
+                arg = (args,)[0][0]
+            except:
+                arg = ''
+            if arg == '6':
+                keyboard.add(Text("Зарегистрированных лиц нет", {"cmd": "dog_1"}), color=KeyboardButtonColor.POSITIVE)
+                keyboard.row()
+            elif arg == '7':
+                keyboard.add(Text("Необходимо составить", {"cmd": "dog_2"}), color=KeyboardButtonColor.POSITIVE)
+                keyboard.add(Text("Договор будет иметь силу акта", {"cmd": "dog_3"}), color=KeyboardButtonColor.POSITIVE)
+                keyboard.row()
             keyboard.add(Text("Отказаться", {"cmd": "no_no"}), color=KeyboardButtonColor.NEGATIVE)
             keyboard = keyboard.get_json()
             return keyboard
