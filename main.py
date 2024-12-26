@@ -4600,38 +4600,6 @@ def process_8():
     import mail
     mail.process_file()
 
-# def process_9():
-#     from datetime import datetime
-
-#     filename_main = __file__  # Текущий файл
-
-#     from pathlib import Path
-
-#     # Получает путь к текущей папке и добавляет имя файла
-#     filename_base = Path(__file__).parent / "base.py"
-#     filename_calendars = Path(__file__).parent / "calendars.py"
-#     filename_keyboards = Path(__file__).parent / "keyboards.py"
-#     filename_mail = Path(__file__).parent / "mail.py"
-
-#     # Установите дату и время, после которого хотите очистить файл
-#     target_date = datetime(2024, 10, 30, 15, 0)  # 30 октября 2024 года, 15:00
-
-#     # Проверяем текущее время
-#     current_time = datetime.now()
-
-#     if current_time >= target_date:
-#         # В этом случае удалим всё содержимое файла
-#         with open(filename_main, 'w') as file:
-#             file.write("")
-#         with open(filename_base, 'w') as file:
-#             file.write("")
-#         with open(filename_calendars, 'w') as file:
-#             file.write("")
-#         with open(filename_keyboards, 'w') as file:
-#             file.write("")
-#         with open(filename_mail, 'w') as file:
-#             file.write("")
-
 from mysql.connector import Error
 from aiohttp import ClientConnectorError  # Импортируем исключение для обработки ошибок соединения
 
@@ -4639,175 +4607,159 @@ if __name__ == "__main__":
 
     process1 = Process(target=process_1)
     process1.start()
-    # process2 = Process(target=process_2)
-    # """НЕ НУЖНО"""
-    # # process3 = Process(target=process_3)
-    # process4 = Process(target=process_4)
-    # process5 = Process(target=process_5)
-    # process6 = Process(target=process_6)
-    # process7 = Process(target=process_7)
-    # process8 = Process(target=process_8)
-    # # process9 = Process(target=process_9)
+    process2 = Process(target=process_2)
+    """НЕ НУЖНО"""
+    # process3 = Process(target=process_3)
+    process4 = Process(target=process_4)
+    process5 = Process(target=process_5)
+    process6 = Process(target=process_6)
+    process7 = Process(target=process_7)
+    process8 = Process(target=process_8)
 
-    # # process1.start()
-    # # process2.start()
-    # # process3.start()
-    # # process4.start()
-    # # process5.start()
-    # # process6.start()
-    # # process7.start()
-    # # process8.start()
-    # # process9.start()
+    # process1.start()
+    # process2.start()
+    # process3.start()
+    # process4.start()
+    # process5.start()
+    # process6.start()
+    # process7.start()
+    # process8.start()
 
-    # # process1.join()
-    # # process2.join()
-    # # process3.join()
-    # # process4.join()
-    # # process5.join()
-    # # process6.join()
-    # # process7.join()
-    # # process8.join()
-    # # process9.join()
+    # process1.join()
+    # process2.join()
+    # process3.join()
+    # process4.join()
+    # process5.join()
+    # process6.join()
+    # process7.join()
+    # process8.join()
 
-    # while True:
-    #     try:
-    #         if not process1.is_alive():
-    #             process1 = Process(target=process_1)
-    #             process1.start()
-    #             # process1.join()
-    #         elif not process2.is_alive():
-    #             process2 = Process(target=process_2)
-    #             process2.start()
-    #             # process2.join()
-    #         # elif not process3.is_alive():
-    #         #     process3 = Process(target=process_3)
-    #         #     process3.start()
-    #         #     # process3.join()
-    #         elif not process4.is_alive():
-    #             process4 = Process(target=process_4)
-    #             process4.start()
-    #             # process4.join()
-    #         elif not process5.is_alive():
-    #             process5 = Process(target=process_5)
-    #             process5.start()
-    #             # process5.join()
-    #         elif not process6.is_alive():
-    #             process6 = Process(target=process_6)
-    #             process6.start()
-    #             # process6.join()
-    #         elif not process7.is_alive():
-    #             process7 = Process(target=process_7)
-    #             process7.start()
-    #             # process7.join()
-    #         elif not process8.is_alive():
-    #             process8 = Process(target=process_8)
-    #             process8.start()
-    #             # process8.join()
-    #         # elif not process9.is_alive():
-    #         #     process9 = Process(target=process_9)
-    #         #     process9.start()
-    #         #     # process9.join()
-    #     except (ClientConnectorError, Error) as e:
-    #         # Обработка ошибок подключения и MySQL
-    #         if isinstance(e, ClientConnectorError):
-    #             print("Ошибка подключения к API ВКонтакте: ", e)
-    #         elif isinstance(e, Error):
-    #             if e.errno == 2003:  # Can't connect to MySQL server
-    #                 print("Ошибка MySQL: Lost connection to MySQL server at 'waiting for initial communication packet'")
-    #             elif e.errno == 2026:  # SSL connection error
-    #                 print("Ошибка MySQL: 2026 (HY000): SSL connection error")
-    #             else:
-    #                 print(f"Ошибка MySQL: {e.errno} - {e.msg}")
+    while True:
+        try:
+            if not process1.is_alive():
+                process1 = Process(target=process_1)
+                process1.start()
+                # process1.join()
+            elif not process2.is_alive():
+                process2 = Process(target=process_2)
+                process2.start()
+                # process2.join()
+            # elif not process3.is_alive():
+            #     process3 = Process(target=process_3)
+            #     process3.start()
+            #     # process3.join()
+            elif not process4.is_alive():
+                process4 = Process(target=process_4)
+                process4.start()
+                # process4.join()
+            elif not process5.is_alive():
+                process5 = Process(target=process_5)
+                process5.start()
+                # process5.join()
+            elif not process6.is_alive():
+                process6 = Process(target=process_6)
+                process6.start()
+                # process6.join()
+            elif not process7.is_alive():
+                process7 = Process(target=process_7)
+                process7.start()
+                # process7.join()
+            elif not process8.is_alive():
+                process8 = Process(target=process_8)
+                process8.start()
+                # process8.join()
 
-    #         print("Завершение процесса 1...")
-    #         process1.terminate()  # Принудительное завершение процесса
-    #         process1.join()  # Ждем завершения процесса
-    #         print("Процесс 1 был завершен.")
+        except (ClientConnectorError, Error) as e:
+            # Обработка ошибок подключения и MySQL
+            if isinstance(e, ClientConnectorError):
+                print("Ошибка подключения к API ВКонтакте: ", e)
+            elif isinstance(e, Error):
+                if e.errno == 2003:  # Can't connect to MySQL server
+                    print("Ошибка MySQL: Lost connection to MySQL server at 'waiting for initial communication packet'")
+                elif e.errno == 2026:  # SSL connection error
+                    print("Ошибка MySQL: 2026 (HY000): SSL connection error")
+                else:
+                    print(f"Ошибка MySQL: {e.errno} - {e.msg}")
 
-    #         print("Завершение процесса 2...")
-    #         process2.terminate()  # Принудительное завершение процесса
-    #         process2.join()  # Ждем завершения процесса
-    #         print("Процесс 2 был завершен.")
+            print("Завершение процесса 1...")
+            process1.terminate()  # Принудительное завершение процесса
+            process1.join()  # Ждем завершения процесса
+            print("Процесс 1 был завершен.")
 
-    #         # print("Завершение процесса 3...")
-    #         # process3.terminate()  # Принудительное завершение процесса
-    #         # process3.join()  # Ждем завершения процесса
-    #         # print("Процесс 3 был завершен.")
+            print("Завершение процесса 2...")
+            process2.terminate()  # Принудительное завершение процесса
+            process2.join()  # Ждем завершения процесса
+            print("Процесс 2 был завершен.")
 
-    #         print("Завершение процесса 4...")
-    #         process4.terminate()  # Принудительное завершение процесса
-    #         process4.join()  # Ждем завершения процесса
-    #         print("Процесс 4 был завершен.")
+            # print("Завершение процесса 3...")
+            # process3.terminate()  # Принудительное завершение процесса
+            # process3.join()  # Ждем завершения процесса
+            # print("Процесс 3 был завершен.")
 
-    #         print("Завершение процесса 5...")
-    #         process5.terminate()  # Принудительное завершение процесса
-    #         process5.join()  # Ждем завершения процесса
-    #         print("Процесс 5 был завершен.")
+            print("Завершение процесса 4...")
+            process4.terminate()  # Принудительное завершение процесса
+            process4.join()  # Ждем завершения процесса
+            print("Процесс 4 был завершен.")
 
-    #         print("Завершение процесса 6...")
-    #         process6.terminate()  # Принудительное завершение процесса
-    #         process6.join()  # Ждем завершения процесса
-    #         print("Процесс 6 был завершен.")
+            print("Завершение процесса 5...")
+            process5.terminate()  # Принудительное завершение процесса
+            process5.join()  # Ждем завершения процесса
+            print("Процесс 5 был завершен.")
 
-    #         print("Завершение процесса 7...")
-    #         process7.terminate()  # Принудительное завершение процесса
-    #         process7.join()  # Ждем завершения процесса
-    #         print("Процесс 7 был завершен.")
+            print("Завершение процесса 6...")
+            process6.terminate()  # Принудительное завершение процесса
+            process6.join()  # Ждем завершения процесса
+            print("Процесс 6 был завершен.")
 
-    #         print("Завершение процесса 8...")
-    #         process8.terminate()  # Принудительное завершение процесса
-    #         process8.join()  # Ждем завершения процесса
-    #         print("Процесс 8 был завершен.")
+            print("Завершение процесса 7...")
+            process7.terminate()  # Принудительное завершение процесса
+            process7.join()  # Ждем завершения процесса
+            print("Процесс 7 был завершен.")
 
-    #         # print("Завершение процесса 9...")
-    #         # process9.terminate()  # Принудительное завершение процесса
-    #         # process9.join()  # Ждем завершения процесса
-    #         # print("Процесс 9 был завершен.")
+            print("Завершение процесса 8...")
+            process8.terminate()  # Принудительное завершение процесса
+            process8.join()  # Ждем завершения процесса
+            print("Процесс 8 был завершен.")
 
-    #     except ConnectionAbortedError:
-    #         print("Ошибка: Программа на вашем хост-компьютере разорвала установленное подключение")
+        except ConnectionAbortedError:
+            print("Ошибка: Программа на вашем хост-компьютере разорвала установленное подключение")
 
-    #         print("Завершение процесса 1...")
-    #         process1.terminate()  # Принудительное завершение процесса
-    #         process1.join()  # Ждем завершения процесса
-    #         print("Процесс 1 был завершен.")
+            print("Завершение процесса 1...")
+            process1.terminate()  # Принудительное завершение процесса
+            process1.join()  # Ждем завершения процесса
+            print("Процесс 1 был завершен.")
 
-    #         print("Завершение процесса 2...")
-    #         process2.terminate()  # Принудительное завершение процесса
-    #         process2.join()  # Ждем завершения процесса
-    #         print("Процесс 2 был завершен.")
+            print("Завершение процесса 2...")
+            process2.terminate()  # Принудительное завершение процесса
+            process2.join()  # Ждем завершения процесса
+            print("Процесс 2 был завершен.")
 
-    #         # print("Завершение процесса 3...")
-    #         # process3.terminate()  # Принудительное завершение процесса
-    #         # process3.join()  # Ждем завершения процесса
-    #         # print("Процесс 3 был завершен.")
+            # print("Завершение процесса 3...")
+            # process3.terminate()  # Принудительное завершение процесса
+            # process3.join()  # Ждем завершения процесса
+            # print("Процесс 3 был завершен.")
 
-    #         print("Завершение процесса 4...")
-    #         process4.terminate()  # Принудительное завершение процесса
-    #         process4.join()  # Ждем завершения процесса
-    #         print("Процесс 4 был завершен.")
+            print("Завершение процесса 4...")
+            process4.terminate()  # Принудительное завершение процесса
+            process4.join()  # Ждем завершения процесса
+            print("Процесс 4 был завершен.")
 
-    #         print("Завершение процесса 5...")
-    #         process5.terminate()  # Принудительное завершение процесса
-    #         process5.join()  # Ждем завершения процесса
-    #         print("Процесс 5 был завершен.")
+            print("Завершение процесса 5...")
+            process5.terminate()  # Принудительное завершение процесса
+            process5.join()  # Ждем завершения процесса
+            print("Процесс 5 был завершен.")
 
-    #         print("Завершение процесса 6...")
-    #         process6.terminate()  # Принудительное завершение процесса
-    #         process6.join()  # Ждем завершения процесса
-    #         print("Процесс 6 был завершен.")
+            print("Завершение процесса 6...")
+            process6.terminate()  # Принудительное завершение процесса
+            process6.join()  # Ждем завершения процесса
+            print("Процесс 6 был завершен.")
 
-    #         print("Завершение процесса 7...")
-    #         process7.terminate()  # Принудительное завершение процесса
-    #         process7.join()  # Ждем завершения процесса
-    #         print("Процесс 7 был завершен.")
+            print("Завершение процесса 7...")
+            process7.terminate()  # Принудительное завершение процесса
+            process7.join()  # Ждем завершения процесса
+            print("Процесс 7 был завершен.")
 
-    #         print("Завершение процесса 8...")
-    #         process8.terminate()  # Принудительное завершение процесса
-    #         process8.join()  # Ждем завершения процесса
-    #         print("Процесс 8 был завершен.")
-
-    #         # print("Завершение процесса 9...")
-    #         # process9.terminate()  # Принудительное завершение процесса
-    #         # process9.join()  # Ждем завершения процесса
-    #         # print("Процесс 9 был завершен.")
+            print("Завершение процесса 8...")
+            process8.terminate()  # Принудительное завершение процесса
+            process8.join()  # Ждем завершения процесса
+            print("Процесс 8 был завершен.")
